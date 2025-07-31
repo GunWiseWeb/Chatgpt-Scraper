@@ -1,0 +1,94 @@
+### 1. scraper.py
+```python
+import requests
+from bs4 import BeautifulSoup
+import csv
+
+BASE_URL = "https://www.rkguns.com/firearms.html"
+OUTPUT_FILE = "inventory.csv"
+
+HEADERS = {
+    "User-Agent": "Mozilla/5.0 (compatible; InventoryScraper/1.0)"
+}
+
+FIELDS = ["UPC", "MPN", "Caliber", "Type"]
+
+def parse_page(page_num):
+    params = {"page": page_num, "numResults": 36}
+    response = requests.get(BASE_URL, headers=HEADERS, params=params)
+    response.raise_for_status()
+    soup = BeautifulSoup(response.text, "html.parser")
+    items = soup.select(".product-item")
+    results = []
+    for item in items:
+        upc = item.select_one(".upc").get_text(strip=True) if item.select_one(".upc") else ""
+        mpn = item.select_one(".mpn").get_text(strip=True) if item.select_one(".mpn") else ""
+        caliber = item.select_one(".caliber").get_text(strip=True) if item.select_one(".caliber") else ""
+        ftype = item.select_one(".firearm-type").get_text(strip=True) if item.select_one(".firearm-type") else ""
+        results.append({"UPC": upc, "MPN": mpn, "Caliber": caliber, "Type": ftype})
+    return results
+
+
+def main():
+    with open(OUTPUT_FILE, "w", newline='', encoding="utf-8") as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=FIELDS)
+        writer.writeheader()
+        for page in range(1, 279):  # 278 pages total
+            print(f"Scraping page {page}")
+            try:
+                rows = parse_page(page)
+                writer.writerows(rows)
+            except Exception as e:
+                print(f"Error on page {page}: {e}")
+
+if __name__ == "__main__":
+    main()
+```
+
+---
+
+### 2. requirements.txt
+```
+requests
+beautifulsoup4
+```
+
+---
+
+### 3. GitHub Actions Workflow (.github/workflows/scrape.yml)
+```yaml
+name: Scrape Firearms Inventory
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * *'  # Runs every day at 03:00 UTC
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python 3.x
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run scraper
+        run: |
+          python scraper.py
+
+      - name: Upload CSV as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: inventory-csv
+          path: inventory.csv
+```
