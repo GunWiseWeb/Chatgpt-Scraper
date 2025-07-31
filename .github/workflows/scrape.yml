@@ -1,3 +1,4 @@
+# File: .github/workflows/scrape.yml
 name: Scrape Firearms Inventory
 
 on:
@@ -27,7 +28,7 @@ jobs:
         run: python scraper.py
 
       - name: Upload CSV artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: inventory-csv
           path: inventory.csv
