@@ -1,5 +1,3 @@
-### 1. scraper.py
-```python
 import requests
 from bs4 import BeautifulSoup
 import csv
@@ -28,12 +26,11 @@ def parse_page(page_num):
         results.append({"UPC": upc, "MPN": mpn, "Caliber": caliber, "Type": ftype})
     return results
 
-
 def main():
-    with open(OUTPUT_FILE, "w", newline='', encoding="utf-8") as csvfile:
+    with open(OUTPUT_FILE, "w", newline="", encoding="utf-8") as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=FIELDS)
         writer.writeheader()
-        for page in range(1, 279):  # 278 pages total
+        for page in range(1, 279):  # pages 1 through 278
             print(f"Scraping page {page}")
             try:
                 rows = parse_page(page)
@@ -43,52 +40,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-```
-
----
-
-### 2. requirements.txt
-```
-requests
-beautifulsoup4
-```
-
----
-
-### 3. GitHub Actions Workflow (.github/workflows/scrape.yml)
-```yaml
-name: Scrape Firearms Inventory
-
-on:
-  workflow_dispatch:
-  schedule:
-    - cron: '0 3 * * *'  # Runs every day at 03:00 UTC
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Set up Python 3.x
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.x'
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-
-      - name: Run scraper
-        run: |
-          python scraper.py
-
-      - name: Upload CSV as artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: inventory-csv
-          path: inventory.csv
-```
