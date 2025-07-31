@@ -1,42 +1,71 @@
+# File: scraper_api.py
+
 import requests
-from bs4 import BeautifulSoup
 import csv
+import math
 
-BASE_URL = "https://www.rkguns.com/firearms.html"
+BASE_URL = (
+    "https://www.rkguns.com/on/demandware.store/"
+    "Sites-rkguns-Site/default/Search-UpdateGrid"
+)
 OUTPUT_FILE = "inventory.csv"
+FIELDS = ["Brand/Model", "UPC", "MPN", "Caliber", "Type"]
 
-HEADERS = {
-    "User-Agent": "Mozilla/5.0 (compatible; InventoryScraper/1.0)"
-}
+def make_session():
+    sess = requests.Session()
+    sess.headers.update({
+        "User-Agent": "Mozilla/5.0 (compatible; InventoryScraper/1.0)",
+        "Accept": "application/json, text/javascript, */*; q=0.01",
+        "X-Requested-With": "XMLHttpRequest",
+        "Referer": "https://www.rkguns.com/firearms.html?page=1&numResults=36"
+    })
+    # Bypass the age-gate
+    sess.cookies.set("hasVerifiedAge", "true", domain="www.rkguns.com")
+    return sess
 
-FIELDS = ["UPC", "MPN", "Caliber", "Type"]
-
-def parse_page(page_num):
-    params = {"page": page_num, "numResults": 36}
-    response = requests.get(BASE_URL, headers=HEADERS, params=params)
-    response.raise_for_status()
-    soup = BeautifulSoup(response.text, "html.parser")
-    items = soup.select(".product-item")
-    results = []
-    for item in items:
-        upc = item.select_one(".upc").get_text(strip=True) if item.select_one(".upc") else ""
-        mpn = item.select_one(".mpn").get_text(strip=True) if item.select_one(".mpn") else ""
-        caliber = item.select_one(".caliber").get_text(strip=True) if item.select_one(".caliber") else ""
-        ftype = item.select_one(".firearm-type").get_text(strip=True) if item.select_one(".firearm-type") else ""
-        results.append({"UPC": upc, "MPN": mpn, "Caliber": caliber, "Type": ftype})
-    return results
+def fetch_page(sess, offset):
+    params = {
+        "cgid": "firearms",
+        "start": offset,
+        "sz": 36,
+        "format": "ajax"
+    }
+    r = sess.get(BASE_URL, params=params)
+    r.raise_for_status()
+    return r.json()
 
 def main():
-    with open(OUTPUT_FILE, "w", newline="", encoding="utf-8") as csvfile:
-        writer = csv.DictWriter(csvfile, fieldnames=FIELDS)
+    sess = make_session()
+    init = fetch_page(sess, 0)
+    total = init["grid"]["hits"]
+    pages = math.ceil(total / 36)
+
+    with open(OUTPUT_FILE, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=FIELDS)
         writer.writeheader()
-        for page in range(1, 279):  # pages 1 through 278
-            print(f"Scraping page {page}")
-            try:
-                rows = parse_page(page)
-                writer.writerows(rows)
-            except Exception as e:
-                print(f"Error on page {page}: {e}")
+
+        for i in range(pages):
+            offset = i * 36
+            print(f"Fetching records {offset+1}–{min(offset+36, total)} of {total}")
+            data = fetch_page(sess, offset)
+            for prod in data["grid"]["products"]:
+                # Combine brand + model/name
+                brand = prod.get("brand", "").strip()
+                # DW JSON may use pageTitle, productName or name
+                model = (
+                    prod.get("pageTitle", "").strip()
+                    or prod.get("productName", "").strip()
+                    or prod.get("name", "").strip()
+                )
+                bnm = f"{brand}/{model}" if brand and model else (brand or model)
+                
+                writer.writerow({
+                    "Brand/Model": bnm,
+                    "UPC": prod.get("upc", ""),
+                    "MPN": prod.get("manufacturerPartNumber", ""),
+                    "Caliber": prod.get("attributes", {}).get("caliber", ""),
+                    "Type": prod.get("attributes", {}).get("firearmtype", "")
+                })
 
 if __name__ == "__main__":
     main()
