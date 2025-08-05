@@ -1,3 +1,2 @@
-magento-py-scraper>=0.1.0
 requests
 beautifulsoup4
