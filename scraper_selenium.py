@@ -1,89 +1,62 @@
-# File: scraper_selenium.py
+# File: scraper_api.py
 
+import requests
 import csv
-import chromedriver_autoinstaller
-import time
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
+import math
 
-# auto-install the matching Chromedriver
-chromedriver_autoinstaller.install()
-
-URL_TEMPLATE = "https://www.rkguns.com/firearms.html?page={}&numResults=36"
+BASE_URL = "https://www.rkguns.com/on/demandware.store/Sites-rkguns-Site/default/Search-UpdateGrid"
 OUTPUT_FILE = "inventory.csv"
 FIELDS = ["Brand/Model", "UPC", "MPN", "Caliber", "Type"]
-TOTAL_PAGES = 278  # fixed total page count
+
+def make_session():
+    s = requests.Session()
+    s.headers.update({
+        "User-Agent": "Mozilla/5.0 (compatible; InventoryScraper/1.0)",
+        "Accept": "application/json, text/javascript, */*; q=0.01",
+        "X-Requested-With": "XMLHttpRequest",
+        "Referer": "https://www.rkguns.com/firearms.html?page=1&numResults=36"
+    })
+    # Bypass age-gate
+    s.cookies.set("hasVerifiedAge", "true", domain="www.rkguns.com")
+    return s
+
+def fetch_page(session, offset):
+    resp = session.get(BASE_URL, params={
+        "cgid": "firearms",
+        "start": offset,
+        "sz": 36
+    })
+    resp.raise_for_status()
+    return resp.json()
 
 def main():
-    print("🚀 Starting scraper", flush=True)
+    sess = make_session()
+    first = fetch_page(sess, 0)
+    total = first["grid"]["hits"]
+    pages = math.ceil(total / 36)
 
-    opts = Options()
-    opts.add_argument("--headless")
-    opts.add_argument("--no-sandbox")
-    opts.add_argument("--disable-dev-shm-usage")
-
-    driver = webdriver.Chrome(options=opts)
-    wait = WebDriverWait(driver, 15)
-
-    # seed the age-gate cookie before hitting any page
-    driver.get("https://www.rkguns.com/")
-    driver.add_cookie({"name":"hasVerifiedAge","value":"true","domain":"www.rkguns.com"})
-    print("🔓 Age gate cookie set", flush=True)
-
-    with open(OUTPUT_FILE, "w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=FIELDS)
+    with open(OUTPUT_FILE, "w", newline="", encoding="utf-8") as fp:
+        writer = csv.DictWriter(fp, fieldnames=FIELDS)
         writer.writeheader()
 
-        for page in range(1, TOTAL_PAGES+1):
-            print(f"→ Loading page {page}/{TOTAL_PAGES}", flush=True)
-            driver.get(URL_TEMPLATE.format(page))
-
-            # wait for the item‐name elements to appear
-            try:
-                wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, ".cio-item-name")))
-            except:
-                print(f"⚠️  No products on page {page}", flush=True)
-                continue
-
-            # grab all names
-            name_elems = driver.find_elements(By.CSS_SELECTOR, ".cio-item-name")
-            print(f"   Found {len(name_elems)} items", flush=True)
-
-            for name_elem in name_elems:
-                brand_model = name_elem.text.strip()
-
-                # navigate up to the product container
-                container = name_elem.find_element(By.XPATH, "./ancestor::div[contains(@class,'cio-item')]")
-
-                # these selectors may need adjustment if the site uses different classes now
-                upc = container.get_attribute("data-upc") or ""
-                mpn = container.get_attribute("data-mpn") or ""
-                caliber = ""
-                ftype = ""
-
-                # if caliber & type are visible in sub-elements, adjust these:
-                try:
-                    caliber = container.find_element(By.CSS_SELECTOR, ".cio-item-caliber").text.strip()
-                except:
-                    pass
-                try:
-                    ftype = container.find_element(By.CSS_SELECTOR, ".cio-item-type").text.strip()
-                except:
-                    pass
-
+        for i in range(pages):
+            offset = i * 36
+            print(f"Fetching items {offset+1}–{min(offset+36, total)} of {total}")
+            data = fetch_page(sess, offset)
+            for prod in data["grid"]["products"]:
+                brand = prod.get("brand", "").strip()
+                name = (
+                    prod.get("pageTitle","").strip()
+                    or prod.get("productName","").strip()
+                    or prod.get("name","").strip()
+                )
                 writer.writerow({
-                    "Brand/Model": brand_model,
-                    "UPC": upc,
-                    "MPN": mpn,
-                    "Caliber": caliber,
-                    "Type": ftype
+                    "Brand/Model": f"{brand}/{name}" if brand and name else (brand or name),
+                    "UPC": prod.get("upc",""),
+                    "MPN": prod.get("manufacturerPartNumber",""),
+                    "Caliber": prod.get("attributes",{}).get("caliber",""),
+                    "Type": prod.get("attributes",{}).get("firearmtype","")
                 })
-
-    driver.quit()
-    print("✅ Scraping complete", flush=True)
 
 if __name__ == "__main__":
     main()
