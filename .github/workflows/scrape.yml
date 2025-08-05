@@ -24,7 +24,7 @@ jobs:
           python -m pip install -r requirements.txt
 
       - name: Run scraper
-        run: python scraper_api.py
+        run: python scraper.py
 
       - name: Upload CSV artifact
         uses: actions/upload-artifact@v4
