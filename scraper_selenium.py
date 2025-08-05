@@ -1,19 +1,15 @@
 # File: scraper_selenium.py
 
 import time
-import math
 import csv
-import chromedriver_autoinstaller
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 
-# Auto-download & install matching Chromedriver
-chromedriver_autoinstaller.install()
-
 URL_TEMPLATE = "https://www.rkguns.com/firearms.html?page={}&numResults=36"
 OUTPUT_FILE = "inventory.csv"
 FIELDS = ["Brand/Model", "UPC", "MPN", "Caliber", "Type"]
+TOTAL_PAGES = 278  # known total
 
 def main():
     chrome_opts = Options()
@@ -22,35 +18,35 @@ def main():
     chrome_opts.add_argument("--disable-dev-shm-usage")
 
     driver = webdriver.Chrome(options=chrome_opts)
-    driver.get(URL_TEMPLATE.format(1))
 
-    # Bypass age gate if present
+    # Bypass age gate once at the first page
+    driver.get(URL_TEMPLATE.format(1))
+    time.sleep(2)
     try:
-        driver.find_element(By.CSS_SELECTOR, "button.age-gate-yes").click()
+        btn = driver.find_element(By.CSS_SELECTOR, "button.age-gate-yes")
+        btn.click()
+        time.sleep(1)
     except:
         pass
-
-    summary = driver.find_element(By.CSS_SELECTOR, ".paging-summary").text
-    total = int(summary.split("of")[1].split("Results")[0].strip())
-    pages = math.ceil(total / 36)
 
     with open(OUTPUT_FILE, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=FIELDS)
         writer.writeheader()
 
-        for page in range(1, pages + 1):
+        for page in range(1, TOTAL_PAGES + 1):
+            print(f"Loading page {page}/{TOTAL_PAGES}")
             driver.get(URL_TEMPLATE.format(page))
-            time.sleep(3)  # let JS load
+            time.sleep(3)  # let JS run
 
             items = driver.find_elements(By.CSS_SELECTOR, ".product-item")
             for itm in items:
-                brand_model = itm.find_element(By.CSS_SELECTOR, ".product-name").text
+                name = itm.find_element(By.CSS_SELECTOR, ".product-name").text
                 upc = itm.find_element(By.CSS_SELECTOR, ".upc").text if itm.find_elements(By.CSS_SELECTOR, ".upc") else ""
                 mpn = itm.find_element(By.CSS_SELECTOR, ".mpn").text if itm.find_elements(By.CSS_SELECTOR, ".mpn") else ""
                 caliber = itm.find_element(By.CSS_SELECTOR, ".caliber").text if itm.find_elements(By.CSS_SELECTOR, ".caliber") else ""
                 ftype = itm.find_element(By.CSS_SELECTOR, ".firearm-type").text if itm.find_elements(By.CSS_SELECTOR, ".firearm-type") else ""
                 writer.writerow({
-                    "Brand/Model": brand_model,
+                    "Brand/Model": name,
                     "UPC": upc,
                     "MPN": mpn,
                     "Caliber": caliber,
