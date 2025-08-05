@@ -1,3 +1,4 @@
+# File: .github/workflows/scrape.yml
 name: Scrape Firearms Inventory
 
 on:
@@ -6,7 +7,6 @@ on:
 jobs:
   scrape:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v3
 
@@ -15,18 +15,13 @@ jobs:
         with:
           python-version: '3.x'
 
-      - name: Install dependencies
+      - name: Install requests
         run: |
-          python -u -m pip install --upgrade pip
-          python -u -m pip install -r requirements.txt
-
-      - name: Set up Chrome
-        uses: browser-actions/setup-chrome@v1
+          python -m pip install --upgrade pip
+          python -m pip install requests
 
       - name: Run scraper
-        env:
-          DISPLAY: :99
-        run: python -u scraper_selenium.py
+        run: python scraper_api.py
 
       - name: Upload CSV artifact
         uses: actions/upload-artifact@v4
