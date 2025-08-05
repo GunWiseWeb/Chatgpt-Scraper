@@ -1,3 +1,5 @@
+# File: scraper_selenium.py
+
 import csv
 import time
 import chromedriver_autoinstaller
@@ -53,9 +55,9 @@ def main():
     chrome_opts.add_argument("--disable-dev-shm-usage")
 
     driver = webdriver.Chrome(options=chrome_opts)
-    wait   = WebDriverWait(driver, 15)
+    wait   = WebDriverWait(driver, 10)
 
-    # Bypass age gate cookie
+    # Seed age-gate cookie
     driver.get("https://www.rkguns.com/")
     driver.add_cookie({"name":"hasVerifiedAge","value":"true","domain":"www.rkguns.com"})
 
@@ -68,20 +70,17 @@ def main():
             driver.get(LIST_URL.format(page))
             wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "a.cio-product-card")))
 
-            # ① grab hrefs only
-            hrefs = [e.get_attribute("href") 
+            hrefs = [e.get_attribute("href")
                      for e in driver.find_elements(By.CSS_SELECTOR, "a.cio-product-card")]
-
             print(f"   Collected {len(hrefs)} detail URLs", flush=True)
 
             for href in hrefs:
                 print(f"     Fetching detail: {href}", flush=True)
                 driver.get(href)
-                wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "h1.page-title")))
+                time.sleep(2)  # brief pause for HTML to load
 
                 data = parse_detail_page(driver.page_source)
                 writer.writerow(data)
-                time.sleep(0.2)
 
     driver.quit()
     print("✅ Done — inventory.csv created", flush=True)
