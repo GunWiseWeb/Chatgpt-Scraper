@@ -1,5 +1,3 @@
-# File: scraper_selenium.py
-
 import csv
 import time
 import chromedriver_autoinstaller
@@ -10,7 +8,6 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
 
-# Auto-install matching Chromedriver
 chromedriver_autoinstaller.install()
 
 LIST_URL    = "https://www.rkguns.com/firearms.html?page={}&numResults=36"
@@ -20,11 +17,9 @@ TOTAL_PAGES = 278
 
 def parse_detail_page(html: str):
     soup = BeautifulSoup(html, "html.parser")
-    # Title
     title_el = soup.select_one("h1.page-title")
     title    = title_el.get_text(strip=True) if title_el else ""
 
-    # Specs
     specs = {}
     for row in soup.select("table.product-specs tr"):
         th = row.select_one("th")
@@ -32,7 +27,6 @@ def parse_detail_page(html: str):
         if th and td:
             specs[th.get_text(strip=True)] = td.get_text(strip=True)
 
-    # Description & infer type
     desc_el = soup.select_one(".product-description") or soup.select_one("#description")
     desc = desc_el.get_text(" ", strip=True).lower() if desc_el else ""
     for kind in ("pistol", "revolver", "rifle", "shotgun"):
@@ -61,7 +55,7 @@ def main():
     driver = webdriver.Chrome(options=chrome_opts)
     wait   = WebDriverWait(driver, 15)
 
-    # Seed age-gate
+    # Bypass age gate cookie
     driver.get("https://www.rkguns.com/")
     driver.add_cookie({"name":"hasVerifiedAge","value":"true","domain":"www.rkguns.com"})
 
@@ -69,27 +63,25 @@ def main():
         writer = csv.DictWriter(fh, fieldnames=FIELDS)
         writer.writeheader()
 
-        for page in range(1, TOTAL_PAGES+1):
+        for page in range(1, TOTAL_PAGES + 1):
             print(f"→ Listing page {page}/{TOTAL_PAGES}", flush=True)
             driver.get(LIST_URL.format(page))
             wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "a.cio-product-card")))
 
-            cards = driver.find_elements(By.CSS_SELECTOR, "a.cio-product-card")
-            print(f"   Found {len(cards)} products", flush=True)
+            # ① grab hrefs only
+            hrefs = [e.get_attribute("href") 
+                     for e in driver.find_elements(By.CSS_SELECTOR, "a.cio-product-card")]
 
-            for card in cards:
-                href = card.get_attribute("href")
-                print("     Fetching detail:", href, flush=True)
+            print(f"   Collected {len(hrefs)} detail URLs", flush=True)
+
+            for href in hrefs:
+                print(f"     Fetching detail: {href}", flush=True)
                 driver.get(href)
-                # wait for specs table or title
                 wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "h1.page-title")))
 
-                detail_html = driver.page_source
-                data = parse_detail_page(detail_html)
+                data = parse_detail_page(driver.page_source)
                 writer.writerow(data)
-                # go back to listing
-                driver.back()
-                wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "a.cio-product-card")))
+                time.sleep(0.2)
 
     driver.quit()
     print("✅ Done — inventory.csv created", flush=True)
