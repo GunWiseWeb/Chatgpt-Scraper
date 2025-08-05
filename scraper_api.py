@@ -1,10 +1,11 @@
-# File: scraper_api.py
-
 import requests
 import csv
 import math
 
-BASE_URL = "https://www.rkguns.com/on/demandware.store/Sites-rkguns-Site/default/Search-UpdateGrid"
+BASE_URL = (
+    "https://www.rkguns.com/on/demandware.store/"
+    "Sites-rkguns-Site/default/Search-UpdateGrid"
+)
 OUTPUT_FILE = "inventory.csv"
 FIELDS = ["Brand/Model", "UPC", "MPN", "Caliber", "Type"]
 
@@ -24,7 +25,8 @@ def fetch_page(session, offset):
     resp = session.get(BASE_URL, params={
         "cgid": "firearms",
         "start": offset,
-        "sz": 36
+        "sz": 36,
+        "format": "ajax"           # <— ensure AJAX format
     })
     resp.raise_for_status()
     return resp.json()
@@ -41,7 +43,7 @@ def main():
 
         for i in range(pages):
             offset = i * 36
-            print(f"Fetching items {offset+1}–{min(offset+36, total)} of {total}")
+            print(f"Fetching items {offset+1}–{min(offset+36, total)} of {total}", flush=True)
             data = fetch_page(sess, offset)
             for prod in data["grid"]["products"]:
                 brand = prod.get("brand", "").strip()
