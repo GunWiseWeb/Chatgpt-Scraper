@@ -10,7 +10,7 @@ from selenium.webdriver.support import expected_conditions as EC
 chromedriver_autoinstaller.install()
 
 START_PAGE = int(os.getenv("START_PAGE", "1"))
-END_PAGE   = int(os.getenv("END_PAGE",   "1"))  # default to 1 for safe test
+END_PAGE   = int(os.getenv("END_PAGE",   "1"))  # safe default
 LIST_URL   = "https://www.rkguns.com/firearms.html?page={}&numResults=36"
 OUT_FILE   = f"inventory_{START_PAGE}_{END_PAGE}.csv"
 FIELDS     = ["Title","Brand","Model Name","UPC","MPN","Caliber","Type"]
@@ -24,21 +24,25 @@ def infer_type(text):
 
 def parse_detail(driver):
     # Title
-    title = driver.find_element(By.CSS_SELECTOR, "h1.page-title").text.strip()
+    title = ""
+    try:
+        title = driver.find_element(By.CSS_SELECTOR, "h1.page-title").text.strip()
+    except:
+        pass
 
     # Specs via data-th
     specs = {}
-    cells = driver.find_elements(By.CSS_SELECTOR, "td.product-attribute-value")
-    for td in cells:
-        key = td.get_attribute("data-th").strip()
-        val = td.text.strip()
-        specs[key] = val
+    for td in driver.find_elements(By.CSS_SELECTOR, "td.product-attribute-value"):
+        key = td.get_attribute("data-th") or ""
+        val = td.text or ""
+        specs[key.strip()] = val.strip()
 
     # Description → Type
+    desc = ""
     try:
         desc = driver.find_element(By.CSS_SELECTOR, ".product-description").text
     except:
-        desc = ""
+        pass
     typ = infer_type(desc)
 
     return {
@@ -58,7 +62,7 @@ def main():
     opts.add_argument("--disable-dev-shm-usage")
 
     driver = webdriver.Chrome(options=opts)
-    wait   = WebDriverWait(driver, 15)
+    wait   = WebDriverWait(driver, 10)
 
     # seed age gate
     driver.get("https://www.rkguns.com/")
@@ -80,11 +84,15 @@ def main():
             for url in hrefs:
                 print(f"     Detail → {url}", flush=True)
                 driver.get(url)
-                # wait until specs cells appear
-                wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "td.product-attribute-value")))
+
+                # short pause instead of waiting for a selector that might not appear
+                time.sleep(1)
 
                 data = parse_detail(driver)
                 writer.writerow(data)
+
+                # back to listing? not needed since we re-get it each loop
+                # time.sleep small throttle
                 time.sleep(0.2)
 
     driver.quit()
