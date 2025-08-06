@@ -1,4 +1,4 @@
-name: Scrape RKGuns Inventory
+name: Scrape RKGuns Inventory 2
 
 on:
   workflow_dispatch:
@@ -6,20 +6,22 @@ on:
 jobs:
   scrape:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v3
 
-      - name: Set up Python
+      - name: Set up Python & Playwright
         uses: actions/setup-python@v4
         with:
           python-version: '3.x'
 
-      - name: Install requests
-        run: python -m pip install --upgrade pip requests
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          playwright install chromium
 
       - name: Run scraper
-        run: python scraper_api.py
+        run: python scraper_playwright.py
 
       - name: Upload CSV artifact
         uses: actions/upload-artifact@v4
