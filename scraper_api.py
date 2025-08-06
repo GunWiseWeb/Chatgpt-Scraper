@@ -1,67 +1,80 @@
-import requests
 import csv
 import math
+from playwright.sync_api import sync_playwright
 
-BASE_URL = (
-    "https://www.rkguns.com/on/demandware.store/"
-    "Sites-rkguns-Site/default/Search-UpdateGrid"
-)
+LIST_URL = "https://www.rkguns.com/firearms.html?page={}&numResults=36"
 OUTPUT_FILE = "inventory.csv"
 FIELDS = ["Title", "Brand", "Model Name", "UPC", "MPN", "Caliber", "Type"]
-PAGE_SIZE = 36
-
-def make_session():
-    s = requests.Session()
-    s.headers.update({
-        "User-Agent": "Mozilla/5.0",
-        "Accept": "application/json",
-        "X-Requested-With": "XMLHttpRequest",
-        "Referer": "https://www.rkguns.com/firearms.html?page=1&numResults=36"
-    })
-    s.cookies.set("hasVerifiedAge", "true", domain="www.rkguns.com")
-    return s
-
-def fetch_page(session, offset):
-    r = session.get(BASE_URL, params={
-        "cgid": "firearms",
-        "start": offset,
-        "sz": PAGE_SIZE
-    })
-    r.raise_for_status()
-    return r.json()
+TOTAL_PAGES = 278
 
 def main():
-    sess = make_session()
-    first = fetch_page(sess, 0)
-    total = first["grid"]["hits"]
-    pages = math.ceil(total / PAGE_SIZE)
-    print(f"Total items: {total}, pages: {pages}")
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch(headless=True)
+        context = browser.new_context()
+        # seed age-gate cookie
+        context.add_cookies([{
+            "name": "hasVerifiedAge",
+            "value": "true",
+            "domain": "www.rkguns.com",
+            "path": "/"
+        }])
+        page = context.new_page()
 
-    with open(OUTPUT_FILE, "w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=FIELDS)
-        writer.writeheader()
+        # prepare CSV
+        with open(OUTPUT_FILE, "w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=FIELDS)
+            writer.writeheader()
 
-        for p in range(pages):
-            offset = p * PAGE_SIZE
-            print(f"Fetching page {p+1}/{pages}", flush=True)
-            data = fetch_page(sess, offset)
-            for prod in data["grid"]["products"]:
-                title = prod.get("pageTitle", "").strip()
-                brand = prod.get("brand", "").strip()
-                model = prod.get("productName", "").strip()
-                upc   = prod.get("upc", "")
-                mpn   = prod.get("manufacturerPartNumber", "")
-                attrs = prod.get("attributes", {})
-                caliber = attrs.get("caliber", "")
-                ftype   = attrs.get("firearmtype", "").capitalize()
-                writer.writerow({
-                    "Title":      title,
-                    "Brand":      brand,
-                    "Model Name": model,
-                    "UPC":        upc,
-                    "MPN":        mpn,
-                    "Caliber":    caliber,
-                    "Type":       ftype
-                })
+            for p in range(1, TOTAL_PAGES + 1):
+                print(f"→ Page {p}/{TOTAL_PAGES}")
+                # intercept the grid XHR
+                grid_json = None
+                def handle_route(route):
+                    nonlocal grid_json
+                    req = route.request
+                    if "Search-UpdateGrid" in req.url and req.method == "GET":
+                        route.continue_()
+                        resp = route.fetch()
+                        grid_json = resp.json()
+                    else:
+                        route.continue_()
 
-    print("✅ Done — inventory.csv written")
+                page.route("**/Search-UpdateGrid**", handle_route)
+                page.goto(LIST_URL.format(p))
+                # wait for at least one card to ensure the XHR fired
+                page.wait_for_selector("a.cio-product-card")
+
+                if not grid_json:
+                    print("⚠️ Grid JSON not captured on page", p)
+                    continue
+
+                products = grid_json["grid"]["products"]
+                print(f"   Got {len(products)} items")
+                for prod in products:
+                    title = prod.get("pageTitle","").strip()
+                    brand = prod.get("brand","").strip()
+                    model = prod.get("productName","").strip() or title
+                    upc   = prod.get("upc","")
+                    mpn   = prod.get("manufacturerPartNumber","")
+                    attrs = prod.get("attributes",{})
+                    caliber = attrs.get("caliber","")
+                    ftype   = attrs.get("firearmtype","").capitalize()
+                    writer.writerow({
+                        "Title":      title,
+                        "Brand":      brand,
+                        "Model Name": model,
+                        "UPC":        upc,
+                        "MPN":        mpn,
+                        "Caliber":    caliber,
+                        "Type":       ftype
+                    })
+
+                # reset for next page
+                grid_json = None
+                page.unroute("**/Search-UpdateGrid**", handle_route)
+
+        browser.close()
+    print("✅ Done — inventory.csv created")
+
+if __name__ == "__main__":
+    main()
