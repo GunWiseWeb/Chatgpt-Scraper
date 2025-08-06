@@ -8,27 +8,24 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        range: ["1-100","101-200","201-278"]
+        range: ["1-70","71-140","141-210","211-278"]  # four chunks
+
     env:
       PAGES: ${{ matrix.range }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Parse START/END
+      - name: Parse START/END pages
         run: |
           IFS="-" read START END <<< "${PAGES}"
           echo "START_PAGE=$START" >> $GITHUB_ENV
           echo "END_PAGE=$END"   >> $GITHUB_ENV
 
-      - name: Set up Python & Chrome
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.x'
-
-      - name: Install deps
+      - name: Install dependencies
         run: |
-          pip install --upgrade pip selenium chromedriver-autoinstaller
+          python -m pip install --upgrade pip selenium chromedriver-autoinstaller
           sudo apt-get update && sudo apt-get install -y chromium-browser chromium-chromedriver
 
       - name: Run chunked scraper
@@ -37,25 +34,33 @@ jobs:
       - name: Upload chunk CSV
         uses: actions/upload-artifact@v4
         with:
-          name: inventory-${{ env.START_PAGE }}-${{ env.END_PAGE }}.csv
-          path: inventory-${{ env.START_PAGE }}-${{ env.END_PAGE }}.csv
+          name: inventory_${{ env.START_PAGE }}_${{ env.END_PAGE }}.csv
+          path: inventory_${{ env.START_PAGE }}_${{ env.END_PAGE }}.csv
 
   merge:
     needs: scrape
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
 
-      - name: Download all chunks
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Download all chunk artifacts
         uses: actions/download-artifact@v3
         with:
-          name: inventory-1-100.csv,inventory-101-200.csv,inventory-201-278.csv
+          name: |
+            inventory_1_70.csv,
+            inventory_71_140.csv,
+            inventory_141_210.csv,
+            inventory_211_278.csv
           path: .
 
-      - name: Merge CSVs
+      - name: Merge into inventory.csv
         run: |
-          (head -n1 inventory-1-100.csv &&\
-           tail -n+2 -q inventory-*.csv) > inventory.csv
+          # write header from the first chunk
+          head -n1 inventory_1_70.csv > inventory.csv
+          # append data rows from all chunks
+          tail -n+2 -q inventory_*.csv >> inventory.csv
 
       - name: Upload final CSV
         uses: actions/upload-artifact@v4
