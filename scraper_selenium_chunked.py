@@ -8,7 +8,6 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
 
-# auto-install the right ChromeDriver
 chromedriver_autoinstaller.install()
 
 START_PAGE = int(os.getenv("START_PAGE", "1"))
@@ -26,13 +25,22 @@ def infer_type(text):
 
 def parse_detail(html):
     soup = BeautifulSoup(html, "html.parser")
-    title = (soup.select_one("h1.page-title") or "").get_text(strip=True)
+    # Title
+    title_el = soup.select_one("h1.page-title")
+    title    = title_el.get_text(strip=True) if title_el else ""
+
+    # Specs table
     specs = {}
     for tr in soup.select("table.product-specs tr"):
-        th,td = tr.select_one("th"), tr.select_one("td")
+        th = tr.select_one("th")
+        td = tr.select_one("td")
         if th and td:
             specs[th.get_text(strip=True)] = td.get_text(strip=True)
-    desc = (soup.select_one(".product-description") or "").get_text(" ", strip=True)
+
+    # Description block
+    desc_el = soup.select_one(".product-description") or soup.select_one("#description")
+    desc_text = desc_el.get_text(" ", strip=True) if desc_el else ""
+
     return {
         "Title":      title,
         "Brand":      specs.get("Brand",""),
@@ -40,7 +48,7 @@ def parse_detail(html):
         "UPC":        specs.get("UPC",""),
         "MPN":        specs.get("MPN", specs.get("Manufacturer Part Number","")),
         "Caliber":    specs.get("Caliber",""),
-        "Type":       infer_type(desc)
+        "Type":       infer_type(desc_text)
     }
 
 def main():
@@ -52,7 +60,7 @@ def main():
     driver = webdriver.Chrome(options=opts)
     wait   = WebDriverWait(driver, 15)
 
-    # seed age-gate
+    # Seed age-gate
     driver.get("https://www.rkguns.com/")
     driver.add_cookie({"name":"hasVerifiedAge","value":"true","domain":"www.rkguns.com"})
 
@@ -67,13 +75,12 @@ def main():
 
             hrefs = [a.get_attribute("href")
                      for a in driver.find_elements(By.CSS_SELECTOR, "a.cio-product-card")]
-
             print(f"   Found {len(hrefs)} products", flush=True)
+
             for url in hrefs:
                 print(f"     Detail → {url}", flush=True)
                 driver.get(url)
-                # small pause to let content render
-                time.sleep(1)
+                time.sleep(1)  # allow HTML to load fully
 
                 data = parse_detail(driver.page_source)
                 writer.writerow(data)
