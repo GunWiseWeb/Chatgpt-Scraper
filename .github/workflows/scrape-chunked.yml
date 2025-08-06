@@ -1,0 +1,64 @@
+name: Chunked RKGuns Scrape
+
+on:
+  workflow_dispatch:
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        range: ["1-100","101-200","201-278"]
+    env:
+      PAGES: ${{ matrix.range }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Parse START/END
+        run: |
+          IFS="-" read START END <<< "${PAGES}"
+          echo "START_PAGE=$START" >> $GITHUB_ENV
+          echo "END_PAGE=$END"   >> $GITHUB_ENV
+
+      - name: Set up Python & Chrome
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install deps
+        run: |
+          pip install --upgrade pip selenium chromedriver-autoinstaller
+          sudo apt-get update && sudo apt-get install -y chromium-browser chromium-chromedriver
+
+      - name: Run chunked scraper
+        run: python scraper_selenium_chunked.py
+
+      - name: Upload chunk CSV
+        uses: actions/upload-artifact@v4
+        with:
+          name: inventory-${{ env.START_PAGE }}-${{ env.END_PAGE }}.csv
+          path: inventory-${{ env.START_PAGE }}-${{ env.END_PAGE }}.csv
+
+  merge:
+    needs: scrape
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Download all chunks
+        uses: actions/download-artifact@v3
+        with:
+          name: inventory-1-100.csv,inventory-101-200.csv,inventory-201-278.csv
+          path: .
+
+      - name: Merge CSVs
+        run: |
+          (head -n1 inventory-1-100.csv &&\
+           tail -n+2 -q inventory-*.csv) > inventory.csv
+
+      - name: Upload final CSV
+        uses: actions/upload-artifact@v4
+        with:
+          name: inventory.csv
+          path: inventory.csv
