@@ -1,76 +1,59 @@
-import csv
-import time
-import requests
-from bs4 import BeautifulSoup
+import os, csv, time, chromedriver_autoinstaller
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
-BASE_LIST_URL = "https://www.rkguns.com/firearms.html?page={}&numResults=36"
-OUTPUT_FILE   = "inventory.csv"
-FIELDS        = ["Title","Brand","Model Name","UPC","MPN","Caliber","Type"]
-TOTAL_PAGES   = 278
-HEADERS = {
-    "User-Agent": "Mozilla/5.0",
-    "Cookie": "hasVerifiedAge=true"
-}
+# auto-install the right chromedriver
+chromedriver_autoinstaller.install()
 
-def infer_type(text):
-    t = text.lower()
-    for kind in ("pistol","revolver","rifle","shotgun"):
-        if kind in t:
-            return kind.capitalize()
-    return "Other"
+START_PAGE = int(os.getenv("START_PAGE", "1"))
+END_PAGE   = int(os.getenv("END_PAGE",   "278"))
+LIST_URL   = "https://www.rkguns.com/firearms.html?page={}&numResults=36"
+OUT_FILE   = f"inventory-{START_PAGE}-{END_PAGE}.csv"
 
-def parse_detail(html):
-    soup = BeautifulSoup(html, "html.parser")
-    title_el = soup.select_one("h1.page-title")
-    title    = title_el.get_text(strip=True) if title_el else ""
-    # specs table:
-    specs = {}
-    for tr in soup.select("table.product-specs tr"):
-        th = tr.select_one("th")
-        td = tr.select_one("td")
-        if th and td:
-            specs[th.get_text(strip=True)] = td.get_text(strip=True)
-    desc_el = soup.select_one(".product-description") or soup.select_one("#description")
-    desc = desc_el.get_text(" ", strip=True) if desc_el else ""
-    return {
-        "Title":      title,
-        "Brand":      specs.get("Brand",""),
-        "Model Name": specs.get("Model Name", specs.get("Model","")),
-        "UPC":        specs.get("UPC",""),
-        "MPN":        specs.get("MPN", specs.get("Manufacturer Part Number","")),
-        "Caliber":    specs.get("Caliber",""),
-        "Type":       infer_type(desc)
-    }
+FIELDS = ["Brand/Model", "UPC", "MPN", "Caliber", "Type"]
 
 def main():
-    session = requests.Session()
-    session.headers.update(HEADERS)
+    opts = Options()
+    opts.add_argument("--headless")
+    opts.add_argument("--no-sandbox")
+    opts.add_argument("--disable-dev-shm-usage")
 
-    with open(OUTPUT_FILE, "w", newline="", encoding="utf-8") as f:
+    driver = webdriver.Chrome(options=opts)
+    wait   = WebDriverWait(driver, 15)
+
+    # seed age-gate
+    driver.get("https://www.rkguns.com/")
+    driver.add_cookie({"name":"hasVerifiedAge","value":"true","domain":"www.rkguns.com"})
+
+    with open(OUT_FILE, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=FIELDS)
         writer.writeheader()
 
-        for page in range(1, TOTAL_PAGES+1):
-            print(f"→ Listing page {page}/{TOTAL_PAGES}")
-            r = session.get(BASE_LIST_URL.format(page))
-            r.raise_for_status()
-            list_soup = BeautifulSoup(r.text, "html.parser")
+        for page in range(START_PAGE, END_PAGE + 1):
+            print(f"→ Page {page}/{END_PAGE}", flush=True)
+            driver.get(LIST_URL.format(page))
+            wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "a.cio-product-card")))
 
-            cards = list_soup.select("a.cio-product-card")
-            print(f"   Found {len(cards)} cards")
+            cards = driver.find_elements(By.CSS_SELECTOR, "a.cio-product-card")
+            for card in cards:
+                name = card.get_attribute("data-cnstrc-item-name") or ""
+                upc  = card.get_attribute("data-cnstrc-item-upc")   or ""
+                mpn  = card.get_attribute("data-cnstrc-item-mpn")   or ""
+                # no caliber/type attributes on card, leave blank
+                writer.writerow({
+                    "Brand/Model": name,
+                    "UPC":         upc,
+                    "MPN":         mpn,
+                    "Caliber":     "",
+                    "Type":        ""
+                })
+            time.sleep(0.2)
 
-            for a in cards:
-                href = a.get("href")
-                if not href.startswith("http"):
-                    href = "https://www.rkguns.com" + href
-                print("     Fetching", href)
-                dr = session.get(href)
-                dr.raise_for_status()
-                data = parse_detail(dr.text)
-                writer.writerow(data)
-                time.sleep(0.1)  # small throttle
-
-    print("✅ Done — inventory.csv created")
+    driver.quit()
+    print(f"✅ Done chunk {START_PAGE}-{END_PAGE}")
 
 if __name__ == "__main__":
     main()
