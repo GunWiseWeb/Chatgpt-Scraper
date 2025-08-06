@@ -6,12 +6,11 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from bs4 import BeautifulSoup
 
 chromedriver_autoinstaller.install()
 
 START_PAGE = int(os.getenv("START_PAGE", "1"))
-END_PAGE   = int(os.getenv("END_PAGE",   "278"))
+END_PAGE   = int(os.getenv("END_PAGE",   "1"))  # default to 1 for safe test
 LIST_URL   = "https://www.rkguns.com/firearms.html?page={}&numResults=36"
 OUT_FILE   = f"inventory_{START_PAGE}_{END_PAGE}.csv"
 FIELDS     = ["Title","Brand","Model Name","UPC","MPN","Caliber","Type"]
@@ -23,32 +22,33 @@ def infer_type(text):
             return k.capitalize()
     return "Other"
 
-def parse_detail(html):
-    soup = BeautifulSoup(html, "html.parser")
+def parse_detail(driver):
     # Title
-    title_el = soup.select_one("h1.page-title")
-    title    = title_el.get_text(strip=True) if title_el else ""
+    title = driver.find_element(By.CSS_SELECTOR, "h1.page-title").text.strip()
 
-    # Specs table
+    # Specs via data-th
     specs = {}
-    for tr in soup.select("table.product-specs tr"):
-        th = tr.select_one("th")
-        td = tr.select_one("td")
-        if th and td:
-            specs[th.get_text(strip=True)] = td.get_text(strip=True)
+    cells = driver.find_elements(By.CSS_SELECTOR, "td.product-attribute-value")
+    for td in cells:
+        key = td.get_attribute("data-th").strip()
+        val = td.text.strip()
+        specs[key] = val
 
-    # Description block
-    desc_el = soup.select_one(".product-description") or soup.select_one("#description")
-    desc_text = desc_el.get_text(" ", strip=True) if desc_el else ""
+    # Description → Type
+    try:
+        desc = driver.find_element(By.CSS_SELECTOR, ".product-description").text
+    except:
+        desc = ""
+    typ = infer_type(desc)
 
     return {
         "Title":      title,
         "Brand":      specs.get("Brand",""),
         "Model Name": specs.get("Model Name", specs.get("Model","")),
         "UPC":        specs.get("UPC",""),
-        "MPN":        specs.get("MPN", specs.get("Manufacturer Part Number","")),
+        "MPN":        specs.get("MPN",""),
         "Caliber":    specs.get("Caliber",""),
-        "Type":       infer_type(desc_text)
+        "Type":       typ
     }
 
 def main():
@@ -60,7 +60,7 @@ def main():
     driver = webdriver.Chrome(options=opts)
     wait   = WebDriverWait(driver, 15)
 
-    # Seed age-gate
+    # seed age gate
     driver.get("https://www.rkguns.com/")
     driver.add_cookie({"name":"hasVerifiedAge","value":"true","domain":"www.rkguns.com"})
 
@@ -75,18 +75,20 @@ def main():
 
             hrefs = [a.get_attribute("href")
                      for a in driver.find_elements(By.CSS_SELECTOR, "a.cio-product-card")]
-            print(f"   Found {len(hrefs)} products", flush=True)
 
+            print(f"   Found {len(hrefs)} products", flush=True)
             for url in hrefs:
                 print(f"     Detail → {url}", flush=True)
                 driver.get(url)
-                time.sleep(1)  # allow HTML to load fully
+                # wait until specs cells appear
+                wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "td.product-attribute-value")))
 
-                data = parse_detail(driver.page_source)
+                data = parse_detail(driver)
                 writer.writerow(data)
+                time.sleep(0.2)
 
     driver.quit()
-    print(f"✅ Done chunk {START_PAGE}-{END_PAGE}", flush=True)
+    print(f"✅ Chunk {START_PAGE}-{END_PAGE} complete", flush=True)
 
 if __name__ == "__main__":
     main()
