@@ -1,48 +1,37 @@
-name: Chunked RKGuns Scrape (with test)
+name: Chunked RKGuns Scrape
 
 on:
   workflow_dispatch:
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.x'
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip selenium chromedriver-autoinstaller
-
-      - name: Run test scrape (page 1 only)
-        env:
-          START_PAGE: 1
-          END_PAGE:   1
-        run: python scraper_selenium_chunked.py
-
-      - name: Upload test CSV
-        uses: actions/upload-artifact@v4
-        with:
-          name: inventory_1_1.csv
-          path: inventory_1_1.csv
-
   scrape:
-    needs: test
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        range: ["1-70","71-140","141-210","211-278"]
+        range:
+          - "1-20"
+          - "21-40"
+          - "41-60"
+          - "61-80"
+          - "81-100"
+          - "101-120"
+          - "121-140"
+          - "141-160"
+          - "161-180"
+          - "181-200"
+          - "201-220"
+          - "221-240"
+          - "241-260"
+          - "261-278"
+
     env:
       PAGES: ${{ matrix.range }}
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v3
 
-      - name: Parse START/END pages
+      - name: Parse START/END
         run: |
           IFS="-" read START END <<< "${PAGES}"
           echo "START_PAGE=$START" >> $GITHUB_ENV
@@ -71,16 +60,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v3
 
-      - name: Download all chunk CSVs
+      - name: Download all chunks
         uses: actions/download-artifact@v4
         with:
           path: .
 
       - name: Merge into inventory.csv
         run: |
-          head -n1 inventory_1_70.csv > inventory.csv
+          head -n1 inventory_1_20.csv > inventory.csv
           tail -n+2 -q inventory_*.csv >> inventory.csv
 
       - name: Upload final CSV
