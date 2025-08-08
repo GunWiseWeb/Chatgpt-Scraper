@@ -1,3 +1,4 @@
+# File: .github/workflows/scrape-chunked.yml
 name: Chunked RKGuns Scrape
 
 on:
@@ -63,15 +64,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Download all chunks
+      - name: Download all chunk CSVs
         uses: actions/download-artifact@v4
         with:
           path: .
 
       - name: Merge into inventory.csv
         run: |
-          head -n1 inventory_1_20.csv > inventory.csv
-          tail -n+2 -q inventory_*.csv >> inventory.csv
+          # Find header from the first chunk
+          first=$(find . -type f -name 'inventory_1_20.csv' | head -n1)
+          head -n1 "$first" > inventory.csv
+
+          # Append data rows from all chunk CSVs
+          find . -type f -name 'inventory_*.csv' | while read f; do
+            tail -n +2 "$f"
+          done >> inventory.csv
+
+          ls -lh inventory.csv
 
       - name: Upload final CSV
         uses: actions/upload-artifact@v4
