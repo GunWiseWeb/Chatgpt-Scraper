@@ -13,20 +13,23 @@ get_header();
         <h1 class="gsd-archive-title">
             <?php
             if (is_tax('gsd_category')) {
-                single_term_title(__('Category: ', 'gun-shop-directory'));
+                single_term_title('');
             } elseif (is_tax('gsd_location')) {
-                single_term_title(__('Location: ', 'gun-shop-directory'));
+                single_term_title(__('Gun Shops in ', 'gun-shop-directory'));
             } else {
-                _e('Gun Shop Directory', 'gun-shop-directory');
+                _e('Find Your Perfect Gun Shop', 'gun-shop-directory');
             }
             ?>
         </h1>
-
-        <?php if (term_description()) : ?>
-            <div class="gsd-archive-description">
-                <?php echo term_description(); ?>
-            </div>
-        <?php endif; ?>
+        <p class="gsd-archive-subtitle">
+            <?php
+            if (is_tax('gsd_category') || is_tax('gsd_location')) {
+                echo term_description();
+            } else {
+                _e('Discover trusted gun shops, read reviews, and find the best firearms dealers near you.', 'gun-shop-directory');
+            }
+            ?>
+        </p>
     </div>
 
     <!-- Search Form -->

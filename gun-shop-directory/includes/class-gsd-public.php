@@ -460,10 +460,24 @@ class GSD_Public {
     private function render_listing_grid_compact($listing_id) {
         $rating = GSD_Reviews::get_average_rating($listing_id);
         $review_count = GSD_Reviews::get_review_count($listing_id);
+        $business_type = get_post_meta($listing_id, '_gsd_business_type', true);
         $city = get_post_meta($listing_id, '_gsd_city', true);
         $state = get_post_meta($listing_id, '_gsd_state', true);
         ?>
         <div class="gsd-listing-card gsd-listing-compact">
+            <?php if (has_post_thumbnail($listing_id)) : ?>
+                <div class="gsd-listing-image-compact">
+                    <a href="<?php echo get_permalink($listing_id); ?>">
+                        <?php echo get_the_post_thumbnail($listing_id, 'medium'); ?>
+                    </a>
+                    <?php if ($business_type) : ?>
+                        <span class="gsd-badge gsd-badge-<?php echo esc_attr($business_type); ?> gsd-badge-overlay">
+                            <?php echo $this->get_business_type_label($business_type); ?>
+                        </span>
+                    <?php endif; ?>
+                </div>
+            <?php endif; ?>
+
             <div class="gsd-listing-content">
                 <h3 class="gsd-listing-title">
                     <a href="<?php echo get_permalink($listing_id); ?>"><?php echo get_the_title($listing_id); ?></a>
@@ -473,7 +487,6 @@ class GSD_Public {
                     <div class="gsd-listing-rating">
                         <?php echo GSD_Reviews::render_stars($rating, false); ?>
                         <span class="gsd-rating-number"><?php echo number_format($rating, 1); ?></span>
-                        <span class="gsd-review-count">(<?php echo $review_count; ?>)</span>
                     </div>
                 <?php endif; ?>
 
@@ -483,6 +496,10 @@ class GSD_Public {
                         <?php echo esc_html(trim("$city, $state", ', ')); ?>
                     </div>
                 <?php endif; ?>
+
+                <a href="<?php echo get_permalink($listing_id); ?>" class="gsd-button gsd-button-primary gsd-button-sm gsd-button-block">
+                    <?php _e('View Details', 'gun-shop-directory'); ?>
+                </a>
             </div>
         </div>
         <?php
@@ -551,23 +568,24 @@ class GSD_Public {
             <?php endif; ?>
 
             <div class="gsd-listing-details">
-                <div class="gsd-listing-header">
-                    <h3 class="gsd-listing-title">
-                        <a href="<?php echo get_permalink($listing_id); ?>"><?php echo get_the_title($listing_id); ?></a>
-                    </h3>
+                <h3 class="gsd-listing-title">
+                    <a href="<?php echo get_permalink($listing_id); ?>"><?php echo get_the_title($listing_id); ?></a>
+                </h3>
+
+                <div class="gsd-listing-meta-row">
                     <?php if ($business_type) : ?>
                         <span class="gsd-badge gsd-badge-<?php echo esc_attr($business_type); ?> gsd-badge-sm">
                             <?php echo $this->get_business_type_label($business_type); ?>
                         </span>
                     <?php endif; ?>
-                </div>
 
-                <?php if ($rating > 0) : ?>
-                    <div class="gsd-listing-rating">
-                        <?php echo GSD_Reviews::render_stars($rating); ?>
-                        <span class="gsd-review-count">(<?php echo $review_count; ?> reviews)</span>
-                    </div>
-                <?php endif; ?>
+                    <?php if ($rating > 0) : ?>
+                        <div class="gsd-listing-rating">
+                            <?php echo GSD_Reviews::render_stars($rating); ?>
+                            <span class="gsd-review-count">(<?php echo $review_count; ?> reviews)</span>
+                        </div>
+                    <?php endif; ?>
+                </div>
 
                 <div class="gsd-listing-excerpt">
                     <?php echo wp_trim_words(get_the_excerpt($listing_id), 15); ?>
