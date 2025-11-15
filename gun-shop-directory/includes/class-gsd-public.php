@@ -313,10 +313,15 @@ class GSD_Public {
      * - list-detailed - Horizontal layout with more details
      */
     public function directory_shortcode($atts) {
+        // Get defaults from admin settings
+        $default_layout = get_option('gsd_directory_layout', 'grid-large');
+        $default_show_search = get_option('gsd_directory_show_search', '1') == '1' ? 'true' : 'false';
+        $default_show_submit = get_option('gsd_directory_show_submit', '1') == '1' ? 'true' : 'false';
+
         $atts = shortcode_atts(array(
-            'layout' => 'grid-large',
-            'show_search' => 'true',
-            'show_submit' => 'true',
+            'layout' => $default_layout,
+            'show_search' => $default_show_search,
+            'show_submit' => $default_show_submit,
             'limit' => get_option('gsd_items_per_page', 12),
             'category' => '',
             'location' => '',

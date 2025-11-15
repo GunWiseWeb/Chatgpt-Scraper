@@ -62,6 +62,24 @@ class GSD_Activator {
         add_option('gsd_items_per_page', '12');
         add_option('gsd_google_maps_api_key', '');
         add_option('gsd_enable_map', '1');
+        add_option('gsd_directory_layout', 'grid-large');
+        add_option('gsd_directory_show_search', '1');
+        add_option('gsd_directory_show_submit', '1');
+
+        // Create directory page
+        $page_check = get_page_by_title('Gun Shop Directory');
+        if (!$page_check) {
+            $directory_page = array(
+                'post_title'    => 'Gun Shop Directory',
+                'post_content'  => '[gsd_directory]',
+                'post_status'   => 'publish',
+                'post_type'     => 'page',
+                'post_author'   => 1,
+                'comment_status' => 'closed'
+            );
+            $page_id = wp_insert_post($directory_page);
+            add_option('gsd_directory_page_id', $page_id);
+        }
 
         // Flush rewrite rules
         flush_rewrite_rules();

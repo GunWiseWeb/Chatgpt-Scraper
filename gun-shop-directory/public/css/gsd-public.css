@@ -762,6 +762,19 @@
     color: var(--gsd-dark);
 }
 
+.gsd-review-notice {
+    padding: 15px 20px;
+    margin-bottom: 20px;
+    background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+    border-left: 4px solid var(--gsd-primary-light);
+    border-radius: 8px;
+}
+
+.gsd-review-notice p {
+    margin: 0;
+    color: var(--gsd-dark);
+}
+
 .gsd-review-form {
     display: flex;
     flex-direction: column;

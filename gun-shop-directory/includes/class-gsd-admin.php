@@ -97,11 +97,21 @@ class GSD_Admin {
         register_setting('gsd_general_settings', 'gsd_items_per_page');
         register_setting('gsd_general_settings', 'gsd_google_maps_api_key');
         register_setting('gsd_general_settings', 'gsd_enable_map');
+        register_setting('gsd_general_settings', 'gsd_directory_layout');
+        register_setting('gsd_general_settings', 'gsd_directory_show_search');
+        register_setting('gsd_general_settings', 'gsd_directory_show_submit');
 
         add_settings_section(
             'gsd_general_section',
             __('General Settings', 'gun-shop-directory'),
             array($this, 'render_general_section'),
+            'gsd_general_settings'
+        );
+
+        add_settings_section(
+            'gsd_directory_section',
+            __('Directory Display Settings', 'gun-shop-directory'),
+            array($this, 'render_directory_section'),
             'gsd_general_settings'
         );
 
@@ -158,6 +168,44 @@ class GSD_Admin {
             'gsd_general_section',
             array('option' => 'gsd_google_maps_api_key', 'description' => __('Enter your Google Maps API key for map functionality', 'gun-shop-directory'))
         );
+
+        // Directory display settings
+        add_settings_field(
+            'gsd_directory_layout',
+            __('Directory Layout', 'gun-shop-directory'),
+            array($this, 'render_select_field'),
+            'gsd_general_settings',
+            'gsd_directory_section',
+            array(
+                'option' => 'gsd_directory_layout',
+                'description' => __('Choose the layout style for the directory page', 'gun-shop-directory'),
+                'options' => array(
+                    'grid-large' => __('Grid - Large Cards', 'gun-shop-directory'),
+                    'grid-compact' => __('Grid - Compact Cards', 'gun-shop-directory'),
+                    'grid-minimal' => __('Grid - Minimal', 'gun-shop-directory'),
+                    'list-simple' => __('List - Simple', 'gun-shop-directory'),
+                    'list-detailed' => __('List - Detailed', 'gun-shop-directory'),
+                )
+            )
+        );
+
+        add_settings_field(
+            'gsd_directory_show_search',
+            __('Show Search Form', 'gun-shop-directory'),
+            array($this, 'render_checkbox_field'),
+            'gsd_general_settings',
+            'gsd_directory_section',
+            array('option' => 'gsd_directory_show_search', 'description' => __('Display search form on directory page', 'gun-shop-directory'))
+        );
+
+        add_settings_field(
+            'gsd_directory_show_submit',
+            __('Show Submit Button', 'gun-shop-directory'),
+            array($this, 'render_checkbox_field'),
+            'gsd_general_settings',
+            'gsd_directory_section',
+            array('option' => 'gsd_directory_show_submit', 'description' => __('Display "Add Your Listing" button on directory page', 'gun-shop-directory'))
+        );
     }
 
     /**
@@ -165,6 +213,19 @@ class GSD_Admin {
      */
     public function render_general_section() {
         echo '<p>' . __('Configure the general settings for the Gun Shop Directory plugin.', 'gun-shop-directory') . '</p>';
+    }
+
+    /**
+     * Render directory settings section.
+     */
+    public function render_directory_section() {
+        $page_id = get_option('gsd_directory_page_id');
+        $page_link = $page_id ? get_edit_post_link($page_id) : '';
+        echo '<p>' . __('Configure how the directory page displays.', 'gun-shop-directory');
+        if ($page_link) {
+            echo ' <a href="' . esc_url($page_link) . '" target="_blank">' . __('Edit Directory Page', 'gun-shop-directory') . '</a>';
+        }
+        echo '</p>';
     }
 
     /**
@@ -198,6 +259,23 @@ class GSD_Admin {
         $option = get_option($args['option'], '12');
         ?>
         <input type="number" name="<?php echo esc_attr($args['option']); ?>" value="<?php echo esc_attr($option); ?>" class="small-text" min="1">
+        <p class="description"><?php echo esc_html($args['description']); ?></p>
+        <?php
+    }
+
+    /**
+     * Render select field.
+     */
+    public function render_select_field($args) {
+        $option = get_option($args['option'], '');
+        ?>
+        <select name="<?php echo esc_attr($args['option']); ?>">
+            <?php foreach ($args['options'] as $value => $label) : ?>
+                <option value="<?php echo esc_attr($value); ?>" <?php selected($option, $value); ?>>
+                    <?php echo esc_html($label); ?>
+                </option>
+            <?php endforeach; ?>
+        </select>
         <p class="description"><?php echo esc_html($args['description']); ?></p>
         <?php
     }

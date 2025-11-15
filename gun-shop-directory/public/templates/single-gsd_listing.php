@@ -205,16 +205,38 @@ while (have_posts()) : the_post();
 
                 <!-- Review Form -->
                 <?php if (is_user_logged_in() || get_option('gsd_allow_anonymous_reviews', '0') == '1') : ?>
+                    <?php
+                    // Check if user has already reviewed
+                    $user_review = null;
+                    $is_updating = false;
+                    if (is_user_logged_in()) {
+                        $user_review = GSD_Reviews::get_user_review($listing_id);
+                        $is_updating = !empty($user_review);
+                    }
+                    ?>
+
                     <div class="gsd-review-form-wrapper">
-                        <h3><?php _e('Write a Review', 'gun-shop-directory'); ?></h3>
-                        <form id="gsd-review-form" class="gsd-review-form">
+                        <?php if ($is_updating) : ?>
+                            <div class="gsd-review-notice">
+                                <p><strong><?php _e('You\'ve already reviewed this business. You can update your review below.', 'gun-shop-directory'); ?></strong></p>
+                            </div>
+                            <h3><?php _e('Update Your Review', 'gun-shop-directory'); ?></h3>
+                        <?php else : ?>
+                            <h3><?php _e('Write a Review', 'gun-shop-directory'); ?></h3>
+                        <?php endif; ?>
+
+                        <form id="gsd-review-form" class="gsd-review-form" data-mode="<?php echo $is_updating ? 'update' : 'create'; ?>">
                             <input type="hidden" name="listing_id" value="<?php echo $listing_id; ?>">
+                            <?php if ($is_updating) : ?>
+                                <input type="hidden" name="review_id" value="<?php echo $user_review->id; ?>">
+                            <?php endif; ?>
 
                             <div class="gsd-form-field">
                                 <label><?php _e('Your Rating', 'gun-shop-directory'); ?> *</label>
                                 <div class="gsd-star-input">
                                     <?php for ($i = 5; $i >= 1; $i--) : ?>
-                                        <input type="radio" name="rating" value="<?php echo $i; ?>" id="star-<?php echo $i; ?>" required>
+                                        <input type="radio" name="rating" value="<?php echo $i; ?>" id="star-<?php echo $i; ?>"
+                                            <?php echo ($is_updating && $user_review->rating == $i) ? 'checked' : ''; ?> required>
                                         <label for="star-<?php echo $i; ?>">★</label>
                                     <?php endfor; ?>
                                 </div>
@@ -222,16 +244,19 @@ while (have_posts()) : the_post();
 
                             <div class="gsd-form-field">
                                 <label for="review-title"><?php _e('Review Title', 'gun-shop-directory'); ?></label>
-                                <input type="text" name="title" id="review-title" class="gsd-input">
+                                <input type="text" name="title" id="review-title" class="gsd-input"
+                                    value="<?php echo $is_updating ? esc_attr($user_review->title) : ''; ?>">
                             </div>
 
                             <div class="gsd-form-field">
                                 <label for="review-content"><?php _e('Your Review', 'gun-shop-directory'); ?> *</label>
-                                <textarea name="content" id="review-content" rows="5" class="gsd-textarea" required></textarea>
+                                <textarea name="content" id="review-content" rows="5" class="gsd-textarea" required><?php echo $is_updating ? esc_textarea($user_review->content) : ''; ?></textarea>
                             </div>
 
                             <div class="gsd-form-field">
-                                <button type="submit" class="gsd-button gsd-button-primary"><?php _e('Submit Review', 'gun-shop-directory'); ?></button>
+                                <button type="submit" class="gsd-button gsd-button-primary">
+                                    <?php echo $is_updating ? __('Update Review', 'gun-shop-directory') : __('Submit Review', 'gun-shop-directory'); ?>
+                                </button>
                             </div>
 
                             <div class="gsd-form-message"></div>

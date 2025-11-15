@@ -14,6 +14,7 @@ class GSD_Reviews {
     public function __construct() {
         add_action('wp_ajax_gsd_submit_review', array($this, 'ajax_submit_review'));
         add_action('wp_ajax_nopriv_gsd_submit_review', array($this, 'ajax_submit_review'));
+        add_action('wp_ajax_gsd_update_review', array($this, 'ajax_update_review'));
         add_action('wp_ajax_gsd_approve_review', array($this, 'ajax_approve_review'));
         add_action('wp_ajax_gsd_delete_review', array($this, 'ajax_delete_review'));
     }
@@ -206,6 +207,107 @@ class GSD_Reviews {
     }
 
     /**
+     * Check if user has already reviewed a listing.
+     *
+     * @param int $listing_id The listing ID.
+     * @param int $user_id The user ID (defaults to current user).
+     * @return bool Whether user has reviewed.
+     */
+    public static function user_has_reviewed($listing_id, $user_id = 0) {
+        if ($user_id === 0) {
+            $user_id = get_current_user_id();
+        }
+
+        if ($user_id === 0) {
+            return false;
+        }
+
+        global $wpdb;
+        $table = $wpdb->prefix . 'gsd_reviews';
+
+        $count = $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM $table WHERE listing_id = %d AND user_id = %d",
+            $listing_id,
+            $user_id
+        ));
+
+        return intval($count) > 0;
+    }
+
+    /**
+     * Get user's review for a listing.
+     *
+     * @param int $listing_id The listing ID.
+     * @param int $user_id The user ID (defaults to current user).
+     * @return object|null Review object or null.
+     */
+    public static function get_user_review($listing_id, $user_id = 0) {
+        if ($user_id === 0) {
+            $user_id = get_current_user_id();
+        }
+
+        if ($user_id === 0) {
+            return null;
+        }
+
+        global $wpdb;
+        $table = $wpdb->prefix . 'gsd_reviews';
+
+        return $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM $table WHERE listing_id = %d AND user_id = %d",
+            $listing_id,
+            $user_id
+        ));
+    }
+
+    /**
+     * Update an existing review.
+     *
+     * @param int $review_id Review ID.
+     * @param array $data Review data to update.
+     * @return bool Success.
+     */
+    public static function update_review($review_id, $data) {
+        global $wpdb;
+        $table = $wpdb->prefix . 'gsd_reviews';
+
+        $update_data = array();
+        $format = array();
+
+        if (isset($data['rating'])) {
+            $update_data['rating'] = intval($data['rating']);
+            $format[] = '%d';
+        }
+
+        if (isset($data['title'])) {
+            $update_data['title'] = sanitize_text_field($data['title']);
+            $format[] = '%s';
+        }
+
+        if (isset($data['content'])) {
+            $update_data['content'] = sanitize_textarea_field($data['content']);
+            $format[] = '%s';
+        }
+
+        if (isset($data['status'])) {
+            $update_data['status'] = sanitize_text_field($data['status']);
+            $format[] = '%s';
+        }
+
+        if (empty($update_data)) {
+            return false;
+        }
+
+        return $wpdb->update(
+            $table,
+            $update_data,
+            array('id' => $review_id),
+            $format,
+            array('%d')
+        );
+    }
+
+    /**
      * AJAX: Submit a review.
      */
     public function ajax_submit_review() {
@@ -244,6 +346,57 @@ class GSD_Reviews {
             wp_send_json_success(array('message' => $message));
         } else {
             wp_send_json_error(array('message' => __('Failed to submit review. You may have already reviewed this listing.', 'gun-shop-directory')));
+        }
+    }
+
+    /**
+     * AJAX: Update a review.
+     */
+    public function ajax_update_review() {
+        check_ajax_referer('gsd_submit_review', 'nonce');
+
+        // Must be logged in to update a review
+        if (!is_user_logged_in()) {
+            wp_send_json_error(array('message' => __('You must be logged in to update a review.', 'gun-shop-directory')));
+        }
+
+        $review_id = intval($_POST['review_id']);
+        $rating = intval($_POST['rating']);
+        $title = sanitize_text_field($_POST['title']);
+        $content = sanitize_textarea_field($_POST['content']);
+
+        if (empty($review_id) || empty($rating) || empty($content)) {
+            wp_send_json_error(array('message' => __('Please fill in all required fields.', 'gun-shop-directory')));
+        }
+
+        if ($rating < 1 || $rating > 5) {
+            wp_send_json_error(array('message' => __('Invalid rating value.', 'gun-shop-directory')));
+        }
+
+        // Verify that the review belongs to the current user
+        $existing_review = self::get_user_review(intval($_POST['listing_id']), get_current_user_id());
+        if (!$existing_review || $existing_review->id != $review_id) {
+            wp_send_json_error(array('message' => __('You can only update your own reviews.', 'gun-shop-directory')));
+        }
+
+        // Set status back to pending if approval is required
+        $status = get_option('gsd_require_approval', '1') == '1' ? 'pending' : $existing_review->status;
+
+        $updated = self::update_review($review_id, array(
+            'rating' => $rating,
+            'title' => $title,
+            'content' => $content,
+            'status' => $status,
+        ));
+
+        if ($updated !== false) {
+            $message = get_option('gsd_require_approval', '1') == '1'
+                ? __('Your review has been updated and is pending approval.', 'gun-shop-directory')
+                : __('Your review has been updated successfully.', 'gun-shop-directory');
+
+            wp_send_json_success(array('message' => $message));
+        } else {
+            wp_send_json_error(array('message' => __('Failed to update review.', 'gun-shop-directory')));
         }
     }
 

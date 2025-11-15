@@ -8,7 +8,7 @@
     $(document).ready(function() {
 
         /**
-         * Review Form Submission
+         * Review Form Submission (both create and update)
          */
         $('#gsd-review-form').on('submit', function(e) {
             e.preventDefault();
@@ -16,19 +16,26 @@
             var $form = $(this);
             var $submitBtn = $form.find('button[type="submit"]');
             var $message = $form.find('.gsd-form-message');
+            var mode = $form.data('mode') || 'create';
+            var originalBtnText = $submitBtn.text();
 
             // Disable submit button
             $submitBtn.prop('disabled', true).text('Submitting...');
             $message.removeClass('success error').hide();
 
             var formData = {
-                action: 'gsd_submit_review',
+                action: mode === 'update' ? 'gsd_update_review' : 'gsd_submit_review',
                 nonce: gsdPublic.nonce,
                 listing_id: $form.find('input[name="listing_id"]').val(),
                 rating: $form.find('input[name="rating"]:checked').val(),
                 title: $form.find('input[name="title"]').val(),
                 content: $form.find('textarea[name="content"]').val()
             };
+
+            // Add review_id if updating
+            if (mode === 'update') {
+                formData.review_id = $form.find('input[name="review_id"]').val();
+            }
 
             $.ajax({
                 url: gsdPublic.ajax_url,
@@ -37,19 +44,21 @@
                 success: function(response) {
                     if (response.success) {
                         $message.addClass('success').text(response.data.message).show();
-                        $form[0].reset();
+
+                        // Only reset form if creating new review
+                        if (mode === 'create') {
+                            $form[0].reset();
+                        }
 
                         // Scroll to message
                         $('html, body').animate({
                             scrollTop: $message.offset().top - 100
                         }, 500);
 
-                        // Reload page after 2 seconds if review was approved
-                        if (response.data.message.indexOf('posted') !== -1) {
-                            setTimeout(function() {
-                                location.reload();
-                            }, 2000);
-                        }
+                        // Reload page after 2 seconds to show updated review
+                        setTimeout(function() {
+                            location.reload();
+                        }, 2000);
                     } else {
                         $message.addClass('error').text(response.data.message).show();
                     }
@@ -58,7 +67,7 @@
                     $message.addClass('error').text('An error occurred. Please try again.').show();
                 },
                 complete: function() {
-                    $submitBtn.prop('disabled', false).text('Submit Review');
+                    $submitBtn.prop('disabled', false).text(originalBtnText);
                 }
             });
         });
