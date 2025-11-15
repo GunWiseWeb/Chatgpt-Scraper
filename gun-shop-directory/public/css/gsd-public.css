@@ -1049,4 +1049,301 @@
     .gsd-submit-listing-wrapper {
         padding: 25px;
     }
+
+    .gsd-listing-row {
+        flex-direction: column;
+        align-items: stretch !important;
+    }
+
+    .gsd-listing-thumb {
+        width: 100% !important;
+        margin-bottom: 15px;
+    }
+
+    .gsd-listing-details {
+        flex: 1 !important;
+        margin-bottom: 15px;
+    }
+}
+
+/* ===========================
+   Directory Wrapper & Submit Banner
+   =========================== */
+.gsd-directory-wrapper {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.gsd-directory-submit-banner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 30px;
+    background: var(--gsd-gradient-1);
+    color: white;
+    border-radius: 10px;
+    margin: 30px 0;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.gsd-directory-submit-banner span {
+    font-size: 1.2em;
+    font-weight: 600;
+}
+
+.gsd-directory-listings {
+    margin-top: 30px;
+}
+
+.gsd-directory-submit-section {
+    margin-top: 40px;
+}
+
+/* ===========================
+   Compact Grid Layout
+   =========================== */
+.gsd-grid-compact {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 20px;
+}
+
+.gsd-listing-compact {
+    padding: 20px;
+}
+
+.gsd-listing-compact .gsd-listing-title {
+    font-size: 1.1em;
+    margin-bottom: 8px;
+}
+
+.gsd-listing-compact .gsd-listing-rating {
+    font-size: 0.9em;
+    margin-bottom: 8px;
+}
+
+.gsd-listing-compact .gsd-listing-location {
+    font-size: 0.85em;
+}
+
+/* ===========================
+   Minimal Grid Layout
+   =========================== */
+.gsd-grid-minimal {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 15px;
+}
+
+.gsd-grid-minimal .gsd-listing-card {
+    padding: 15px;
+}
+
+.gsd-grid-minimal .gsd-listing-title {
+    font-size: 1em;
+    margin-bottom: 5px;
+}
+
+.gsd-grid-minimal .gsd-listing-rating {
+    font-size: 0.85em;
+}
+
+.gsd-grid-minimal .gsd-star {
+    font-size: 1em;
+}
+
+/* ===========================
+   List Layouts (Simple & Detailed)
+   =========================== */
+.gsd-listings-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.gsd-listing-row {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 2px 10px var(--gsd-shadow);
+    transition: all 0.3s ease;
+    border: 1px solid var(--gsd-border);
+}
+
+.gsd-listing-row:hover {
+    box-shadow: 0 4px 20px var(--gsd-shadow-lg);
+    transform: translateX(5px);
+}
+
+/* List Simple */
+.gsd-listing-simple {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    justify-content: space-between;
+}
+
+.gsd-listing-simple .gsd-listing-main-info {
+    flex: 1;
+}
+
+.gsd-listing-simple .gsd-listing-title {
+    font-size: 1.2em;
+    margin: 0 0 5px 0;
+}
+
+.gsd-listing-simple .gsd-listing-location {
+    color: #666;
+    font-size: 0.9em;
+}
+
+.gsd-listing-simple .gsd-listing-rating {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.gsd-listing-simple .gsd-listing-phone {
+    font-size: 0.95em;
+    color: var(--gsd-dark);
+    min-width: 150px;
+}
+
+.gsd-listing-simple .gsd-listing-action {
+    flex-shrink: 0;
+}
+
+/* List Detailed */
+.gsd-listing-detailed {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+}
+
+.gsd-listing-thumb {
+    width: 120px;
+    height: 120px;
+    border-radius: 8px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.gsd-listing-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s;
+}
+
+.gsd-listing-row:hover .gsd-listing-thumb img {
+    transform: scale(1.05);
+}
+
+.gsd-listing-details {
+    flex: 1;
+}
+
+.gsd-listing-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+
+.gsd-listing-header .gsd-listing-title {
+    font-size: 1.3em;
+    margin: 0;
+}
+
+.gsd-badge-sm {
+    padding: 3px 10px;
+    font-size: 0.75em;
+}
+
+.gsd-listing-excerpt {
+    color: #666;
+    line-height: 1.6;
+    margin: 10px 0;
+}
+
+.gsd-listing-meta {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+}
+
+.gsd-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: #666;
+    font-size: 0.9em;
+}
+
+.gsd-meta-item .dashicons {
+    width: 16px;
+    height: 16px;
+    font-size: 16px;
+    color: var(--gsd-secondary);
+}
+
+.gsd-listing-action {
+    flex-shrink: 0;
+    align-self: center;
+}
+
+/* Button Sizes */
+.gsd-button-sm {
+    padding: 8px 20px;
+    font-size: 0.9em;
+}
+
+/* ===========================
+   Mobile Responsive for New Layouts
+   =========================== */
+@media (max-width: 768px) {
+    .gsd-directory-submit-banner {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+    }
+
+    .gsd-grid-compact {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 15px;
+    }
+
+    .gsd-grid-minimal {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 10px;
+    }
+
+    .gsd-listing-simple {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .gsd-listing-simple .gsd-listing-phone {
+        min-width: auto;
+        width: 100%;
+    }
+
+    .gsd-listing-simple .gsd-listing-action {
+        width: 100%;
+    }
+
+    .gsd-listing-simple .gsd-button {
+        width: 100%;
+    }
+
+    .gsd-listing-detailed {
+        flex-direction: column;
+    }
+
+    .gsd-listing-thumb {
+        width: 100%;
+        height: 200px;
+    }
+}
 }

@@ -302,6 +302,291 @@ class GSD_Public {
     }
 
     /**
+     * Directory shortcode - unified directory with search, listings, and submit button.
+     *
+     * @param array $atts Shortcode attributes
+     * Available layouts:
+     * - grid-large (default) - Large cards with images
+     * - grid-compact - Smaller cards, more per row
+     * - grid-minimal - Very compact grid
+     * - list-simple - Horizontal layout, minimal info
+     * - list-detailed - Horizontal layout with more details
+     */
+    public function directory_shortcode($atts) {
+        $atts = shortcode_atts(array(
+            'layout' => 'grid-large',
+            'show_search' => 'true',
+            'show_submit' => 'true',
+            'limit' => get_option('gsd_items_per_page', 12),
+            'category' => '',
+            'location' => '',
+            'orderby' => 'date',
+            'order' => 'DESC',
+        ), $atts);
+
+        $layout_class = 'gsd-layout-' . esc_attr($atts['layout']);
+
+        ob_start();
+        ?>
+        <div class="gsd-directory-wrapper <?php echo $layout_class; ?>">
+            <?php if ($atts['show_search'] === 'true') : ?>
+                <div class="gsd-directory-search">
+                    <?php echo $this->search_shortcode(array()); ?>
+                </div>
+            <?php endif; ?>
+
+            <?php if ($atts['show_submit'] === 'true' && is_user_logged_in() && get_option('gsd_allow_user_submissions', '1') == '1') : ?>
+                <div class="gsd-directory-submit-banner">
+                    <span><?php _e('Have a gun shop?', 'gun-shop-directory'); ?></span>
+                    <a href="#gsd-submit-form" class="gsd-button gsd-button-secondary gsd-submit-trigger">
+                        <?php _e('Add Your Listing', 'gun-shop-directory'); ?>
+                    </a>
+                </div>
+            <?php endif; ?>
+
+            <div class="gsd-directory-listings">
+                <?php echo $this->get_listings_html($atts, $atts['layout']); ?>
+            </div>
+
+            <?php if ($atts['show_submit'] === 'true') : ?>
+                <div id="gsd-submit-form" class="gsd-directory-submit-section" style="display:none;">
+                    <?php echo $this->submit_listing_shortcode(array()); ?>
+                </div>
+            <?php endif; ?>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    /**
+     * Get listings HTML with specific layout.
+     */
+    private function get_listings_html($atts, $layout) {
+        $args = array(
+            'post_type' => 'gsd_listing',
+            'posts_per_page' => intval($atts['limit']),
+            'orderby' => $atts['orderby'],
+            'order' => $atts['order'],
+        );
+
+        if (!empty($atts['category'])) {
+            $args['tax_query'][] = array(
+                'taxonomy' => 'gsd_category',
+                'field' => 'slug',
+                'terms' => $atts['category'],
+            );
+        }
+
+        if (!empty($atts['location'])) {
+            $args['tax_query'][] = array(
+                'taxonomy' => 'gsd_location',
+                'field' => 'slug',
+                'terms' => $atts['location'],
+            );
+        }
+
+        $query = new WP_Query($args);
+
+        ob_start();
+
+        if ($query->have_posts()) {
+            $container_class = $this->get_layout_container_class($layout);
+            echo '<div class="' . esc_attr($container_class) . '">';
+
+            while ($query->have_posts()) {
+                $query->the_post();
+                $this->render_listing_by_layout(get_the_ID(), $layout);
+            }
+
+            echo '</div>';
+            wp_reset_postdata();
+        } else {
+            echo '<p class="gsd-no-results">' . __('No listings found.', 'gun-shop-directory') . '</p>';
+        }
+
+        return ob_get_clean();
+    }
+
+    /**
+     * Get container class based on layout.
+     */
+    private function get_layout_container_class($layout) {
+        $classes = array(
+            'grid-large' => 'gsd-listings-grid gsd-grid-large',
+            'grid-compact' => 'gsd-listings-grid gsd-grid-compact',
+            'grid-minimal' => 'gsd-listings-grid gsd-grid-minimal',
+            'list-simple' => 'gsd-listings-list gsd-list-simple',
+            'list-detailed' => 'gsd-listings-list gsd-list-detailed',
+        );
+
+        return isset($classes[$layout]) ? $classes[$layout] : $classes['grid-large'];
+    }
+
+    /**
+     * Render listing based on layout type.
+     */
+    private function render_listing_by_layout($listing_id, $layout) {
+        switch ($layout) {
+            case 'list-simple':
+                $this->render_listing_list_simple($listing_id);
+                break;
+            case 'list-detailed':
+                $this->render_listing_list_detailed($listing_id);
+                break;
+            case 'grid-minimal':
+            case 'grid-compact':
+                $this->render_listing_grid_compact($listing_id);
+                break;
+            case 'grid-large':
+            default:
+                $this->render_listing_card($listing_id);
+                break;
+        }
+    }
+
+    /**
+     * Render compact grid listing.
+     */
+    private function render_listing_grid_compact($listing_id) {
+        $rating = GSD_Reviews::get_average_rating($listing_id);
+        $review_count = GSD_Reviews::get_review_count($listing_id);
+        $city = get_post_meta($listing_id, '_gsd_city', true);
+        $state = get_post_meta($listing_id, '_gsd_state', true);
+        ?>
+        <div class="gsd-listing-card gsd-listing-compact">
+            <div class="gsd-listing-content">
+                <h3 class="gsd-listing-title">
+                    <a href="<?php echo get_permalink($listing_id); ?>"><?php echo get_the_title($listing_id); ?></a>
+                </h3>
+
+                <?php if ($rating > 0) : ?>
+                    <div class="gsd-listing-rating">
+                        <?php echo GSD_Reviews::render_stars($rating, false); ?>
+                        <span class="gsd-rating-number"><?php echo number_format($rating, 1); ?></span>
+                        <span class="gsd-review-count">(<?php echo $review_count; ?>)</span>
+                    </div>
+                <?php endif; ?>
+
+                <?php if ($city || $state) : ?>
+                    <div class="gsd-listing-location">
+                        <span class="dashicons dashicons-location"></span>
+                        <?php echo esc_html(trim("$city, $state", ', ')); ?>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </div>
+        <?php
+    }
+
+    /**
+     * Render simple list listing.
+     */
+    private function render_listing_list_simple($listing_id) {
+        $rating = GSD_Reviews::get_average_rating($listing_id);
+        $review_count = GSD_Reviews::get_review_count($listing_id);
+        $city = get_post_meta($listing_id, '_gsd_city', true);
+        $state = get_post_meta($listing_id, '_gsd_state', true);
+        $phone = get_post_meta($listing_id, '_gsd_phone', true);
+        ?>
+        <div class="gsd-listing-row gsd-listing-simple">
+            <div class="gsd-listing-main-info">
+                <h3 class="gsd-listing-title">
+                    <a href="<?php echo get_permalink($listing_id); ?>"><?php echo get_the_title($listing_id); ?></a>
+                </h3>
+                <?php if ($city || $state) : ?>
+                    <span class="gsd-listing-location"><?php echo esc_html(trim("$city, $state", ', ')); ?></span>
+                <?php endif; ?>
+            </div>
+
+            <?php if ($rating > 0) : ?>
+                <div class="gsd-listing-rating">
+                    <?php echo GSD_Reviews::render_stars($rating, false); ?>
+                    <span class="gsd-rating-number"><?php echo number_format($rating, 1); ?></span>
+                </div>
+            <?php endif; ?>
+
+            <?php if ($phone) : ?>
+                <div class="gsd-listing-phone"><?php echo esc_html($phone); ?></div>
+            <?php endif; ?>
+
+            <div class="gsd-listing-action">
+                <a href="<?php echo get_permalink($listing_id); ?>" class="gsd-button gsd-button-primary gsd-button-sm">
+                    <?php _e('View', 'gun-shop-directory'); ?>
+                </a>
+            </div>
+        </div>
+        <?php
+    }
+
+    /**
+     * Render detailed list listing.
+     */
+    private function render_listing_list_detailed($listing_id) {
+        $rating = GSD_Reviews::get_average_rating($listing_id);
+        $review_count = GSD_Reviews::get_review_count($listing_id);
+        $business_type = get_post_meta($listing_id, '_gsd_business_type', true);
+        $city = get_post_meta($listing_id, '_gsd_city', true);
+        $state = get_post_meta($listing_id, '_gsd_state', true);
+        $phone = get_post_meta($listing_id, '_gsd_phone', true);
+        ?>
+        <div class="gsd-listing-row gsd-listing-detailed">
+            <?php if (has_post_thumbnail($listing_id)) : ?>
+                <div class="gsd-listing-thumb">
+                    <a href="<?php echo get_permalink($listing_id); ?>">
+                        <?php echo get_the_post_thumbnail($listing_id, 'thumbnail'); ?>
+                    </a>
+                </div>
+            <?php endif; ?>
+
+            <div class="gsd-listing-details">
+                <div class="gsd-listing-header">
+                    <h3 class="gsd-listing-title">
+                        <a href="<?php echo get_permalink($listing_id); ?>"><?php echo get_the_title($listing_id); ?></a>
+                    </h3>
+                    <?php if ($business_type) : ?>
+                        <span class="gsd-badge gsd-badge-<?php echo esc_attr($business_type); ?> gsd-badge-sm">
+                            <?php echo $this->get_business_type_label($business_type); ?>
+                        </span>
+                    <?php endif; ?>
+                </div>
+
+                <?php if ($rating > 0) : ?>
+                    <div class="gsd-listing-rating">
+                        <?php echo GSD_Reviews::render_stars($rating); ?>
+                        <span class="gsd-review-count">(<?php echo $review_count; ?> reviews)</span>
+                    </div>
+                <?php endif; ?>
+
+                <div class="gsd-listing-excerpt">
+                    <?php echo wp_trim_words(get_the_excerpt($listing_id), 15); ?>
+                </div>
+
+                <div class="gsd-listing-meta">
+                    <?php if ($city || $state) : ?>
+                        <span class="gsd-meta-item">
+                            <span class="dashicons dashicons-location"></span>
+                            <?php echo esc_html(trim("$city, $state", ', ')); ?>
+                        </span>
+                    <?php endif; ?>
+                    <?php if ($phone) : ?>
+                        <span class="gsd-meta-item">
+                            <span class="dashicons dashicons-phone"></span>
+                            <?php echo esc_html($phone); ?>
+                        </span>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+            <div class="gsd-listing-action">
+                <a href="<?php echo get_permalink($listing_id); ?>" class="gsd-button gsd-button-primary">
+                    <?php _e('View Details', 'gun-shop-directory'); ?>
+                </a>
+            </div>
+        </div>
+        <?php
+    }
+
+    /**
      * Submit listing shortcode - frontend listing submission form.
      */
     public function submit_listing_shortcode($atts) {

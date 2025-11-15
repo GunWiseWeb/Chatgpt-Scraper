@@ -169,6 +169,26 @@
             });
         });
 
+        /**
+         * Toggle submit listing form in directory view
+         */
+        $('.gsd-submit-toggle-btn').on('click', function(e) {
+            e.preventDefault();
+
+            var $submitSection = $('#gsd-directory-submit-form');
+
+            if ($submitSection.length) {
+                $submitSection.slideToggle(300, function() {
+                    if ($submitSection.is(':visible')) {
+                        // Scroll to form
+                        $('html, body').animate({
+                            scrollTop: $submitSection.offset().top - 100
+                        }, 300);
+                    }
+                });
+            }
+        });
+
     });
 
 })(jQuery);

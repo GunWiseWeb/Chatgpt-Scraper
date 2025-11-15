@@ -37,9 +37,13 @@ A professional WordPress plugin for creating a business directory for gun shops 
 - Customizable options
 
 ### Frontend Display
+- **Unified directory shortcode** with 5 different layout options
+- **Multiple layout styles**:
+  - Grid layouts: Large, Compact, Minimal
+  - List layouts: Simple, Detailed
 - **Premium, modern design** with gradients and animations
 - **Fancy styling** - professional color schemes and visual effects
-- Responsive layout for all devices
+- **Mobile-responsive** - all layouts optimized for mobile devices
 - Custom templates (archive and single views)
 - Interactive hover effects and smooth transitions
 - Star rating visualizations
@@ -88,6 +92,44 @@ Navigate to **Gun Shops → Settings** to configure:
 - **Google Maps API Key**: Required for map functionality
 
 ### Shortcodes
+
+#### Unified Directory (Recommended)
+```
+[gsd_directory layout="grid-large" show_search="true" show_submit="true" limit="12"]
+```
+
+**The all-in-one shortcode** that combines search, listings, and submission functionality with multiple layout options.
+
+**Parameters:**
+- `layout`: Choose from 5 layout options (default: grid-large)
+  - `grid-large`: Large cards with featured images (default)
+  - `grid-compact`: Smaller cards, more per row
+  - `grid-minimal`: Very compact grid layout
+  - `list-simple`: Horizontal minimal layout
+  - `list-detailed`: Horizontal with thumbnails and details
+- `show_search`: Show search form (default: true)
+- `show_submit`: Show "Add Your Listing" button (default: true)
+- `limit`: Number of listings to show (default: 12)
+- `category`: Filter by category slug
+- `location`: Filter by location slug
+- `business_type`: Filter by type (brick_mortar, ecommerce, both)
+- `orderby`: Sort by date, title, or rating
+- `order`: ASC or DESC
+
+**Examples:**
+```
+# Compact grid with search
+[gsd_directory layout="grid-compact" limit="20"]
+
+# Detailed list view without search form
+[gsd_directory layout="list-detailed" show_search="false"]
+
+# Minimal grid for mobile-friendly display
+[gsd_directory layout="grid-minimal" category="firearms"]
+
+# Simple list for sidebar widget
+[gsd_directory layout="list-simple" limit="5" show_submit="false"]
+```
 
 #### Display Listings
 ```
@@ -220,6 +262,9 @@ https://github.com/GunWiseWeb/gun-shop-directory/issues
 ## Changelog
 
 ### Version 1.1.0
+- **Unified directory shortcode** `[gsd_directory]` - combines search, listings, and submission in one
+- **5 layout options** - grid-large, grid-compact, grid-minimal, list-simple, list-detailed
+- **Mobile-responsive layouts** - all layouts optimized for mobile devices
 - **Premium styling** with gradients, animations, and modern design
 - **Frontend listing submission** - users can submit listings from the frontend
 - **Pending approval system** - all user submissions require admin approval
@@ -229,6 +274,7 @@ https://github.com/GunWiseWeb/gun-shop-directory/issues
 - Better form styling with modern inputs
 - New admin setting to enable/disable user submissions
 - Updated color scheme with professional blues and purples
+- JavaScript toggle for submission form display
 
 ### Version 1.0.0
 - Initial release

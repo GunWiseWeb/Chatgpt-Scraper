@@ -74,6 +74,7 @@ class GSD_Core {
         add_filter('template_include', array($public, 'template_loader'));
 
         // Shortcodes
+        add_shortcode('gsd_directory', array($public, 'directory_shortcode')); // New unified shortcode
         add_shortcode('gsd_listings', array($public, 'listings_shortcode'));
         add_shortcode('gsd_search', array($public, 'search_shortcode'));
         add_shortcode('gsd_submit_listing', array($public, 'submit_listing_shortcode'));
