@@ -21,6 +21,7 @@ class GSD_Core {
         require_once GSD_PLUGIN_DIR . 'includes/class-gsd-reviews.php';
         require_once GSD_PLUGIN_DIR . 'includes/class-gsd-admin.php';
         require_once GSD_PLUGIN_DIR . 'includes/class-gsd-public.php';
+        require_once GSD_PLUGIN_DIR . 'includes/class-gsd-importer.php';
     }
 
     private function define_admin_hooks() {

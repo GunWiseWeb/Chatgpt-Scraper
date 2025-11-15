@@ -92,6 +92,16 @@ class GSD_Admin {
             'gsd-reviews',
             array($this, 'render_reviews_page')
         );
+
+        // FFL Import page
+        add_submenu_page(
+            'edit.php?post_type=gsd_listing',
+            __('Import FFLs', 'gun-shop-directory'),
+            __('Import FFLs', 'gun-shop-directory'),
+            'manage_options',
+            'gsd-import',
+            array($this, 'render_import_page')
+        );
     }
 
     /**
@@ -425,5 +435,163 @@ class GSD_Admin {
             </table>
         </div>
         <?php
+    }
+
+    /**
+     * Render import page
+     */
+    public function render_import_page() {
+        // Handle form submission
+        if (isset($_POST['gsd_import_submit']) && check_admin_referer('gsd_import_ffls', 'gsd_import_nonce')) {
+            $this->process_import();
+        }
+        ?>
+        <div class="wrap">
+            <h1><?php _e('Import FFL Listings', 'gun-shop-directory'); ?></h1>
+
+            <div class="card" style="max-width: 800px;">
+                <h2><?php _e('ATF FFL Database Import', 'gun-shop-directory'); ?></h2>
+                <p><?php _e('Import gun shop listings from the ATF Federal Firearms License database.', 'gun-shop-directory'); ?></p>
+
+                <h3><?php _e('How to get the FFL data:', 'gun-shop-directory'); ?></h3>
+                <ol>
+                    <li><?php _e('Visit the ATF website:', 'gun-shop-directory'); ?> <a href="https://www.atf.gov/firearms/listing-federal-firearms-licensees" target="_blank">https://www.atf.gov/firearms/listing-federal-firearms-licensees</a></li>
+                    <li><?php _e('Download the "Complete Listing" file (Excel/XLSX format)', 'gun-shop-directory'); ?></li>
+                    <li><?php _e('Open the file in Excel or Google Sheets', 'gun-shop-directory'); ?></li>
+                    <li><?php _e('Save/Export as CSV format', 'gun-shop-directory'); ?></li>
+                    <li><?php _e('Upload the CSV file below', 'gun-shop-directory'); ?></li>
+                </ol>
+
+                <h3><?php _e('Expected CSV Columns:', 'gun-shop-directory'); ?></h3>
+                <p><?php _e('The CSV should contain these column headers:', 'gun-shop-directory'); ?></p>
+                <ul>
+                    <li><strong>License Number</strong> - <?php _e('FFL number', 'gun-shop-directory'); ?></li>
+                    <li><strong>Business Name</strong> - <?php _e('Name of the business', 'gun-shop-directory'); ?></li>
+                    <li><strong>Premise Street</strong> - <?php _e('Street address', 'gun-shop-directory'); ?></li>
+                    <li><strong>Premise City</strong> - <?php _e('City', 'gun-shop-directory'); ?></li>
+                    <li><strong>Premise State</strong> - <?php _e('State', 'gun-shop-directory'); ?></li>
+                    <li><strong>Premise Zip Code</strong> - <?php _e('ZIP code', 'gun-shop-directory'); ?></li>
+                    <li><strong>License Type</strong> - <?php _e('Type of license', 'gun-shop-directory'); ?></li>
+                    <li><?php _e('Optional: Expiration Date, Business Phone', 'gun-shop-directory'); ?></li>
+                </ul>
+
+                <form method="post" enctype="multipart/form-data">
+                    <?php wp_nonce_field('gsd_import_ffls', 'gsd_import_nonce'); ?>
+
+                    <table class="form-table">
+                        <tr>
+                            <th scope="row">
+                                <label for="gsd_import_file"><?php _e('CSV File', 'gun-shop-directory'); ?></label>
+                            </th>
+                            <td>
+                                <input type="file" name="gsd_import_file" id="gsd_import_file" accept=".csv" required>
+                                <p class="description"><?php _e('Upload the CSV file exported from the ATF Excel file.', 'gun-shop-directory'); ?></p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">
+                                <label for="gsd_import_status"><?php _e('Import Status', 'gun-shop-directory'); ?></label>
+                            </th>
+                            <td>
+                                <select name="gsd_import_status" id="gsd_import_status">
+                                    <option value="publish"><?php _e('Published (listings go live immediately)', 'gun-shop-directory'); ?></option>
+                                    <option value="pending"><?php _e('Pending (require review before publishing)', 'gun-shop-directory'); ?></option>
+                                </select>
+                                <p class="description"><?php _e('Choose whether imported listings should be published immediately or pending review.', 'gun-shop-directory'); ?></p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">
+                                <label for="gsd_import_update"><?php _e('Update Existing', 'gun-shop-directory'); ?></label>
+                            </th>
+                            <td>
+                                <label>
+                                    <input type="checkbox" name="gsd_import_update" id="gsd_import_update" value="1">
+                                    <?php _e('Update existing listings if FFL number already exists', 'gun-shop-directory'); ?>
+                                </label>
+                                <p class="description"><?php _e('If unchecked, existing listings will be skipped.', 'gun-shop-directory'); ?></p>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <p class="submit">
+                        <button type="submit" name="gsd_import_submit" class="button button-primary button-large">
+                            <?php _e('Import FFLs', 'gun-shop-directory'); ?>
+                        </button>
+                    </p>
+                </form>
+
+                <div class="notice notice-info inline">
+                    <p><strong><?php _e('Note:', 'gun-shop-directory'); ?></strong> <?php _e('Large imports may take several minutes. Do not close this page during import.', 'gun-shop-directory'); ?></p>
+                </div>
+            </div>
+        </div>
+        <?php
+    }
+
+    /**
+     * Process FFL import
+     */
+    private function process_import() {
+        // Check if file was uploaded
+        if (!isset($_FILES['gsd_import_file']) || $_FILES['gsd_import_file']['error'] !== UPLOAD_ERR_OK) {
+            add_settings_error(
+                'gsd_import',
+                'file_upload_error',
+                __('Error uploading file. Please try again.', 'gun-shop-directory'),
+                'error'
+            );
+            return;
+        }
+
+        $file = $_FILES['gsd_import_file'];
+        $import_status = isset($_POST['gsd_import_status']) ? $_POST['gsd_import_status'] : 'publish';
+
+        // Validate file type
+        $file_ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        if ($file_ext !== 'csv') {
+            add_settings_error(
+                'gsd_import',
+                'invalid_file_type',
+                __('Please upload a CSV file.', 'gun-shop-directory'),
+                'error'
+            );
+            return;
+        }
+
+        // Process import
+        $importer = new GSD_Importer();
+
+        // Increase time limit for large imports
+        set_time_limit(300); // 5 minutes
+
+        $results = $importer->import_from_csv($file['tmp_name'], array(), 50, $import_status);
+
+        // Display results
+        if ($results['success']) {
+            $message = sprintf(
+                __('Import completed! Imported: %d, Updated: %d, Skipped: %d, Errors: %d', 'gun-shop-directory'),
+                $results['imported'],
+                $results['updated'],
+                $results['skipped'],
+                $results['errors']
+            );
+            add_settings_error('gsd_import', 'import_success', $message, 'success');
+
+            if (!empty($results['messages'])) {
+                foreach ($results['messages'] as $msg) {
+                    add_settings_error('gsd_import', 'import_message', $msg, 'warning');
+                }
+            }
+        } else {
+            add_settings_error(
+                'gsd_import',
+                'import_failed',
+                $results['message'],
+                'error'
+            );
+        }
+
+        settings_errors('gsd_import');
     }
 }
