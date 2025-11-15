@@ -32,6 +32,9 @@ class GSD_Core {
         add_action('admin_init', array($admin, 'register_settings'));
         add_action('wp_ajax_gsd_approve_claim', array($admin, 'approve_claim'));
         add_action('wp_ajax_gsd_reject_claim', array($admin, 'reject_claim'));
+
+        // Add notification bubbles to admin menu
+        add_filter('add_menu_classes', array($admin, 'add_pending_listings_bubble'));
     }
 
     private function define_public_hooks() {

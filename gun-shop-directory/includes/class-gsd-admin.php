@@ -65,6 +65,9 @@ class GSD_Admin {
      * Add admin menu pages.
      */
     public function add_admin_menu() {
+        // Get pending counts for notification bubbles
+        $pending_reviews = $this->get_pending_reviews_count();
+
         // Main settings page
         add_submenu_page(
             'edit.php?post_type=gsd_listing',
@@ -75,15 +78,52 @@ class GSD_Admin {
             array($this, 'render_settings_page')
         );
 
-        // Reviews management page
+        // Reviews management page with notification bubble
+        $reviews_menu_title = __('Reviews', 'gun-shop-directory');
+        if ($pending_reviews > 0) {
+            $reviews_menu_title .= ' <span class="awaiting-mod count-' . $pending_reviews . '"><span class="pending-count">' . number_format_i18n($pending_reviews) . '</span></span>';
+        }
+
         add_submenu_page(
             'edit.php?post_type=gsd_listing',
             __('Reviews', 'gun-shop-directory'),
-            __('Reviews', 'gun-shop-directory'),
+            $reviews_menu_title,
             'manage_options',
             'gsd-reviews',
             array($this, 'render_reviews_page')
         );
+    }
+
+    /**
+     * Get count of pending reviews.
+     */
+    private function get_pending_reviews_count() {
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'gsd_reviews';
+        return (int) $wpdb->get_var("SELECT COUNT(*) FROM {$table_name} WHERE status = 'pending'");
+    }
+
+    /**
+     * Add notification bubble to main Gun Shops menu for pending listings.
+     */
+    public function add_pending_listings_bubble($menu) {
+        global $submenu;
+
+        // Count pending listings
+        $pending_count = wp_count_posts('gsd_listing');
+        $pending_listings = isset($pending_count->pending) ? $pending_count->pending : 0;
+
+        if ($pending_listings > 0) {
+            // Find the Gun Shops menu item
+            foreach ($menu as $key => $item) {
+                if ($item[2] === 'edit.php?post_type=gsd_listing') {
+                    $menu[$key][0] .= ' <span class="awaiting-mod count-' . $pending_listings . '"><span class="pending-count">' . number_format_i18n($pending_listings) . '</span></span>';
+                    break;
+                }
+            }
+        }
+
+        return $menu;
     }
 
     /**
