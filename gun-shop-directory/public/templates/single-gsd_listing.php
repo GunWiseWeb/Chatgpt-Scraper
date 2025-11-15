@@ -315,7 +315,7 @@ while (have_posts()) : the_post();
                     </div>
                 <?php else : ?>
                     <p class="gsd-login-message">
-                        <?php printf(__('Please <a href="%s">log in</a> to write a review.', 'gun-shop-directory'), wp_login_url(get_permalink())); ?>
+                        <?php _e('Please <a href="#" class="gsd-theme-login-trigger">log in</a> to write a review.', 'gun-shop-directory'); ?>
                     </p>
                 <?php endif; ?>
             </div>
@@ -398,7 +398,7 @@ while (have_posts()) : the_post();
             <?php elseif (!is_user_logged_in() && !$is_claimed) : ?>
                 <div class="gsd-sidebar-box gsd-claim-box">
                     <h3><?php _e('Own This Business?', 'gun-shop-directory'); ?></h3>
-                    <p><?php printf(__('<a href="%s">Log in</a> to claim this business.', 'gun-shop-directory'), wp_login_url(get_permalink())); ?></p>
+                    <p><?php _e('<a href="#" class="gsd-theme-login-trigger">Log in</a> to claim this business.', 'gun-shop-directory'); ?></p>
                 </div>
             <?php endif; ?>
 

@@ -406,6 +406,20 @@
             return null;
         }
 
+        /**
+         * Theme Login Trigger - Opens theme's login popup instead of WP login page
+         */
+        $(document).on('click', '.gsd-theme-login-trigger', function(e) {
+            e.preventDefault();
+
+            // Add 'open' class to theme's login popup
+            $('.jws-form-login-popup').addClass('open');
+
+            // Alternatively, if the theme uses a trigger button, click it
+            // Uncomment the line below if the above doesn't work
+            // $('.your-theme-login-button-class').trigger('click');
+        });
+
     });
 
 })(jQuery);

@@ -627,7 +627,7 @@ class GSD_Public {
     public function submit_listing_shortcode($atts) {
         // Check if user is logged in
         if (!is_user_logged_in()) {
-            return '<div class="gsd-submit-listing-wrapper"><p>' . sprintf(__('Please <a href="%s">log in</a> to submit a listing.', 'gun-shop-directory'), wp_login_url(get_permalink())) . '</p></div>';
+            return '<div class="gsd-submit-listing-wrapper"><p>' . __('Please <a href="#" class="gsd-theme-login-trigger">log in</a> to submit a listing.', 'gun-shop-directory') . '</p></div>';
         }
 
         // Check if user submissions are enabled
