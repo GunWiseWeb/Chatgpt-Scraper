@@ -446,31 +446,8 @@ class GSD_Post_Types {
             $query->set('post_type', 'gsd_listing');
         }
 
-        // Handle location search parameter
-        $location_search = isset($_GET['gsd_location']) ? sanitize_text_field($_GET['gsd_location']) : get_query_var('gsd_location');
-        if (!empty($location_search)) {
-            $meta_query = $query->get('meta_query') ?: array();
-
-            // Search in city, state, or zip
-            $meta_query['relation'] = 'OR';
-            $meta_query[] = array(
-                'key' => '_gsd_city',
-                'value' => $location_search,
-                'compare' => 'LIKE'
-            );
-            $meta_query[] = array(
-                'key' => '_gsd_state',
-                'value' => $location_search,
-                'compare' => 'LIKE'
-            );
-            $meta_query[] = array(
-                'key' => '_gsd_zip',
-                'value' => $location_search,
-                'compare' => 'LIKE'
-            );
-
-            $query->set('meta_query', $meta_query);
-        }
+        // Location search is handled by direct SQL filters (posts_join, posts_where, posts_groupby)
+        // No need to set meta_query here as it can conflict with the SQL filters
 
         // Handle general search parameter
         $general_search = isset($_GET['gsd_search']) ? sanitize_text_field($_GET['gsd_search']) : get_query_var('gsd_search');
