@@ -34,7 +34,7 @@ get_header();
 
     <!-- Search Form -->
     <div class="gsd-search-wrapper">
-        <?php echo do_shortcode('[gsd_search]'); ?>
+        <?php echo do_shortcode('[gsd_search show_add_button="true"]'); ?>
     </div>
 
     <!-- Results Bar with Filters - Always visible -->
@@ -152,6 +152,16 @@ get_header();
         <div class="gsd-no-results">
             <h2><?php _e('No listings found', 'gun-shop-directory'); ?></h2>
             <p><?php _e('Try adjusting your search criteria.', 'gun-shop-directory'); ?></p>
+        </div>
+    <?php endif; ?>
+
+    <!-- Submit Listing Form (hidden by default, shown when Add Listing button is clicked) -->
+    <?php if (get_option('gsd_allow_user_submissions', '1') == '1') : ?>
+        <div id="gsd-submit-form" class="gsd-directory-submit-section" style="display:none;">
+            <?php
+            $public = new GSD_Public('gun-shop-directory', GSD_VERSION);
+            echo $public->submit_listing_shortcode(array());
+            ?>
         </div>
     <?php endif; ?>
 </div>
