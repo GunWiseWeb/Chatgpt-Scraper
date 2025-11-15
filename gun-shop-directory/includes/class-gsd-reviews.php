@@ -451,7 +451,7 @@ class GSD_Reviews {
         $half_star = ($rating - $full_stars) >= 0.5;
         $empty_stars = 5 - $full_stars - ($half_star ? 1 : 0);
 
-        $output = '<div class="gsd-star-rating">';
+        $output = '<div class="gsd-star-rating gsd-stars" data-rating="' . esc_attr($rating) . '">';
 
         // Full stars
         for ($i = 0; $i < $full_stars; $i++) {

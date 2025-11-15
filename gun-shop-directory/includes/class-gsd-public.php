@@ -348,6 +348,11 @@ class GSD_Public {
         ob_start();
         ?>
         <div class="gsd-directory-wrapper <?php echo $layout_class; ?>">
+            <div class="gsd-directory-header">
+                <h1 class="gsd-directory-title"><?php _e('Find Your Perfect Gun Shop', 'gun-shop-directory'); ?></h1>
+                <p class="gsd-directory-subtitle"><?php _e('Discover trusted gun shops, read reviews, and find the best firearms dealers near you.', 'gun-shop-directory'); ?></p>
+            </div>
+
             <?php if ($atts['show_search'] === 'true') : ?>
                 <div class="gsd-directory-search">
                     <?php echo $this->search_shortcode(array('show_add_button' => $atts['show_submit'])); ?>

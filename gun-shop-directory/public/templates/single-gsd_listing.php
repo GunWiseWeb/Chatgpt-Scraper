@@ -34,6 +34,13 @@ while (have_posts()) : the_post();
 ?>
 
 <div class="gsd-single-listing">
+    <div class="gsd-back-to-listings">
+        <a href="<?php echo get_post_type_archive_link('gsd_listing'); ?>" class="gsd-back-link">
+            <span class="dashicons dashicons-arrow-left-alt2"></span>
+            <?php _e('Back to Listings', 'gun-shop-directory'); ?>
+        </a>
+    </div>
+
     <div class="gsd-listing-header">
         <div class="gsd-listing-header-content">
             <h1 class="gsd-listing-title"><?php the_title(); ?></h1>
@@ -172,6 +179,16 @@ while (have_posts()) : the_post();
                                 </div>
                             <?php endfor; ?>
                         </div>
+                    </div>
+
+                    <!-- Review Filter -->
+                    <div class="gsd-review-filter">
+                        <label for="gsd-review-sort"><?php _e('Sort by:', 'gun-shop-directory'); ?></label>
+                        <select id="gsd-review-sort" class="gsd-review-sort-select">
+                            <option value="latest"><?php _e('Latest Reviews', 'gun-shop-directory'); ?></option>
+                            <option value="highest"><?php _e('Highest Rated', 'gun-shop-directory'); ?></option>
+                            <option value="lowest"><?php _e('Lowest Rated', 'gun-shop-directory'); ?></option>
+                        </select>
                     </div>
 
                     <!-- Review List -->
@@ -415,8 +432,14 @@ while (have_posts()) : the_post();
                 </div>
 
                 <div class="gsd-form-group">
-                    <label><?php _e('Verification Details', 'gun-shop-directory'); ?> <span class="required">*</span></label>
-                    <textarea name="verification_details" rows="4" placeholder="<?php _e('Provide details to help us verify your ownership (e.g., business registration number, EIN, etc.)', 'gun-shop-directory'); ?>" required class="gsd-textarea"></textarea>
+                    <label>
+                        <?php _e('Verification Details', 'gun-shop-directory'); ?> <span class="required">*</span>
+                        <span class="gsd-tooltip">
+                            <span class="dashicons dashicons-info"></span>
+                            <span class="gsd-tooltip-text"><?php _e('Provide details to help us verify your ownership (e.g., business registration number, EIN, etc.) or send us an email from a certified business email.', 'gun-shop-directory'); ?></span>
+                        </span>
+                    </label>
+                    <textarea name="verification_details" rows="4" placeholder="<?php _e('Provide verification details...', 'gun-shop-directory'); ?>" required class="gsd-textarea"></textarea>
                 </div>
 
                 <div class="gsd-form-message"></div>

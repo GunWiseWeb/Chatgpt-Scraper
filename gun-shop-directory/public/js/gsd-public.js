@@ -110,6 +110,47 @@
         });
 
         /**
+         * Review Sort functionality
+         */
+        $('#gsd-review-sort').on('change', function() {
+            var sortBy = $(this).val();
+            var $reviewsList = $('.gsd-reviews-list');
+            var $reviews = $reviewsList.find('.gsd-review-item').get();
+
+            $reviews.sort(function(a, b) {
+                if (sortBy === 'latest') {
+                    // Sort by date (newest first) - based on DOM order
+                    return 0; // Keep original order which should be latest first
+                } else if (sortBy === 'highest') {
+                    // Sort by highest rating
+                    var ratingA = $(a).find('.gsd-review-header .gsd-stars').data('rating') ||
+                                  $(a).find('.gsd-stars input:checked').length;
+                    var ratingB = $(b).find('.gsd-review-header .gsd-stars').data('rating') ||
+                                  $(b).find('.gsd-stars input:checked').length;
+                    return ratingB - ratingA;
+                } else if (sortBy === 'lowest') {
+                    // Sort by lowest rating
+                    var ratingA = $(a).find('.gsd-review-header .gsd-stars').data('rating') ||
+                                  $(a).find('.gsd-stars input:checked').length;
+                    var ratingB = $(b).find('.gsd-review-header .gsd-stars').data('rating') ||
+                                  $(b).find('.gsd-stars input:checked').length;
+                    return ratingA - ratingB;
+                }
+                return 0;
+            });
+
+            // Reorder the reviews
+            $.each($reviews, function(idx, review) {
+                $reviewsList.append(review);
+            });
+
+            // Smooth scroll to reviews
+            $('html, body').animate({
+                scrollTop: $reviewsList.offset().top - 150
+            }, 300);
+        });
+
+        /**
          * Star rating hover effect
          */
         $('.gsd-star-input label').hover(

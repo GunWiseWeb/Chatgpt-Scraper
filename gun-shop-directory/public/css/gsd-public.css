@@ -79,6 +79,81 @@
 }
 
 /* ===========================
+   Directory Shortcode Header
+   =========================== */
+.gsd-directory-header {
+    text-align: center;
+    margin-bottom: 50px;
+    position: relative;
+}
+
+.gsd-directory-header::before {
+    content: '';
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 4px;
+    background: var(--gsd-gradient-3);
+    border-radius: 2px;
+}
+
+.gsd-directory-title {
+    font-size: 3em;
+    background: var(--gsd-gradient-1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 15px;
+    font-weight: 800;
+    letter-spacing: -1px;
+}
+
+.gsd-directory-subtitle {
+    font-size: 1.2em;
+    color: #64748b;
+    max-width: 800px;
+    margin: 15px auto 0;
+    line-height: 1.6;
+    font-weight: 400;
+}
+
+/* ===========================
+   Back to Listings Link
+   =========================== */
+.gsd-back-to-listings {
+    max-width: 1200px;
+    margin: 0 auto 20px;
+    padding: 0 20px;
+}
+
+.gsd-back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--gsd-primary);
+    text-decoration: none;
+    font-size: 0.95em;
+    font-weight: 600;
+    padding: 8px 16px;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+
+.gsd-back-link:hover {
+    background: var(--gsd-light);
+    color: var(--gsd-primary-light);
+    transform: translateX(-4px);
+}
+
+.gsd-back-link .dashicons {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+}
+
+/* ===========================
    Search Form
    =========================== */
 .gsd-search-wrapper {
@@ -1618,6 +1693,98 @@
 
 body.gsd-modal-open {
     overflow: hidden;
+}
+
+/* ===========================
+   Tooltip Styles
+   =========================== */
+.gsd-tooltip {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    margin-left: 6px;
+    cursor: help;
+}
+
+.gsd-tooltip .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    color: var(--gsd-primary-light);
+}
+
+.gsd-tooltip-text {
+    visibility: hidden;
+    opacity: 0;
+    position: absolute;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--gsd-dark);
+    color: white;
+    padding: 10px 15px;
+    border-radius: 8px;
+    font-size: 0.85em;
+    font-weight: 400;
+    white-space: normal;
+    width: 280px;
+    text-align: left;
+    z-index: 1000;
+    transition: opacity 0.3s, visibility 0.3s;
+    line-height: 1.4;
+}
+
+.gsd-tooltip-text::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: var(--gsd-dark);
+}
+
+.gsd-tooltip:hover .gsd-tooltip-text {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* ===========================
+   Review Filter
+   =========================== */
+.gsd-review-filter {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 20px 0;
+    margin-bottom: 20px;
+    border-bottom: 2px solid var(--gsd-border);
+}
+
+.gsd-review-filter label {
+    font-weight: 600;
+    color: var(--gsd-dark);
+    font-size: 0.95em;
+}
+
+.gsd-review-sort-select {
+    padding: 10px 35px 10px 15px;
+    border: 2px solid var(--gsd-border);
+    border-radius: 8px;
+    font-size: 0.95em;
+    background: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%231a365d' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+}
+
+.gsd-review-sort-select:focus {
+    outline: none;
+    border-color: var(--gsd-primary-light);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
 /* ===========================
