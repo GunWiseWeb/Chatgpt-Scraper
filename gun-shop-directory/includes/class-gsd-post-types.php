@@ -555,6 +555,10 @@ class GSD_Post_Types {
             return $where;
         }
 
+        // Force post type and status
+        $where .= " AND {$wpdb->posts}.post_type = 'gsd_listing'";
+        $where .= " AND {$wpdb->posts}.post_status = 'publish'";
+
         // Search in city, state, or zip
         $where .= $wpdb->prepare(
             " AND (
