@@ -20,9 +20,6 @@ class GSD_Post_Types {
         add_action('pre_get_posts', array($this, 'modify_search_query'));
         add_filter('query_vars', array($this, 'add_query_vars'));
         add_action('template_redirect', array($this, 'prevent_search_404'));
-        add_filter('posts_join', array($this, 'location_search_join'), 10, 2);
-        add_filter('posts_where', array($this, 'location_search_where'), 10, 2);
-        add_filter('posts_groupby', array($this, 'location_search_groupby'), 10, 2);
     }
 
     /**
@@ -446,8 +443,33 @@ class GSD_Post_Types {
             $query->set('post_type', 'gsd_listing');
         }
 
-        // Location search is handled by direct SQL filters (posts_join, posts_where, posts_groupby)
-        // No need to set meta_query here as it can conflict with the SQL filters
+        // Handle location search with post__in
+        $location_search = isset($_GET['gsd_location']) ? sanitize_text_field($_GET['gsd_location']) : '';
+        if (!empty($location_search)) {
+            global $wpdb;
+            $post_ids = $wpdb->get_col($wpdb->prepare(
+                "SELECT DISTINCT p.ID
+                FROM {$wpdb->posts} p
+                INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
+                WHERE p.post_type = 'gsd_listing'
+                AND p.post_status = 'publish'
+                AND (
+                    (pm.meta_key = '_gsd_city' AND pm.meta_value LIKE %s) OR
+                    (pm.meta_key = '_gsd_state' AND pm.meta_value LIKE %s) OR
+                    (pm.meta_key = '_gsd_zip' AND pm.meta_value LIKE %s)
+                )",
+                '%' . $wpdb->esc_like($location_search) . '%',
+                '%' . $wpdb->esc_like($location_search) . '%',
+                '%' . $wpdb->esc_like($location_search) . '%'
+            ));
+
+            if (!empty($post_ids)) {
+                $query->set('post__in', $post_ids);
+            } else {
+                // No results found, set impossible condition
+                $query->set('post__in', array(0));
+            }
+        }
 
         // Handle general search parameter
         $general_search = isset($_GET['gsd_search']) ? sanitize_text_field($_GET['gsd_search']) : get_query_var('gsd_search');
@@ -515,108 +537,5 @@ class GSD_Post_Types {
                 });
             }
         }
-    }
-
-    /**
-     * Join posts and postmeta for location search.
-     */
-    public function location_search_join($join, $query) {
-        global $wpdb;
-
-        // Only for main query on frontend with gsd_location parameter
-        if (is_admin()) {
-            return $join;
-        }
-
-        $location_search = isset($_GET['gsd_location']) ? sanitize_text_field($_GET['gsd_location']) : '';
-        if (empty($location_search)) {
-            return $join;
-        }
-
-        // Join postmeta table for location searches
-        $join .= " LEFT JOIN {$wpdb->postmeta} AS gsd_meta ON {$wpdb->posts}.ID = gsd_meta.post_id";
-
-        return $join;
-    }
-
-    /**
-     * Modify WHERE clause for location search.
-     */
-    public function location_search_where($where, $query) {
-        global $wpdb;
-
-        // Only for main query on frontend with gsd_location parameter
-        if (is_admin()) {
-            return $where;
-        }
-
-        $location_search = isset($_GET['gsd_location']) ? sanitize_text_field($_GET['gsd_location']) : '';
-        if (empty($location_search)) {
-            return $where;
-        }
-
-        // Force post type and status
-        $where .= " AND {$wpdb->posts}.post_type = 'gsd_listing'";
-        $where .= " AND {$wpdb->posts}.post_status = 'publish'";
-
-        // Search in city, state, or zip
-        $where .= $wpdb->prepare(
-            " AND (
-                (gsd_meta.meta_key = '_gsd_city' AND gsd_meta.meta_value LIKE %s) OR
-                (gsd_meta.meta_key = '_gsd_state' AND gsd_meta.meta_value LIKE %s) OR
-                (gsd_meta.meta_key = '_gsd_zip' AND gsd_meta.meta_value LIKE %s)
-            )",
-            '%' . $wpdb->esc_like($location_search) . '%',
-            '%' . $wpdb->esc_like($location_search) . '%',
-            '%' . $wpdb->esc_like($location_search) . '%'
-        );
-
-        return $where;
-    }
-
-    /**
-     * Add GROUP BY to prevent duplicate results.
-     */
-    public function location_search_groupby($groupby, $query) {
-        global $wpdb;
-
-        // Only for main query on frontend with gsd_location parameter
-        if (is_admin()) {
-            return $groupby;
-        }
-
-        $location_search = isset($_GET['gsd_location']) ? sanitize_text_field($_GET['gsd_location']) : '';
-        if (empty($location_search)) {
-            return $groupby;
-        }
-
-        // Group by post ID to prevent duplicates
-        if (empty($groupby)) {
-            $groupby = "{$wpdb->posts}.ID";
-        }
-
-        return $groupby;
-    }
-
-    /**
-     * Helper to check if this is a gun shop query.
-     */
-    private function is_gun_shop_query($query) {
-        // Check if we have gun shop search parameters
-        $has_search_params = (
-            !empty($_GET['gsd_search']) ||
-            !empty($_GET['gsd_location']) ||
-            !empty($_GET['gsd_type']) ||
-            !empty($_GET['gsd_category'])
-        );
-
-        // Check if this is a gun shop search
-        return (
-            $query->get('post_type') === 'gsd_listing' ||
-            is_post_type_archive('gsd_listing') ||
-            is_tax('gsd_category') ||
-            is_tax('gsd_location') ||
-            ($has_search_params && strpos($_SERVER['REQUEST_URI'], 'gun-shops') !== false)
-        );
     }
 }
