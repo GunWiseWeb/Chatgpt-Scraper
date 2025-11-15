@@ -219,11 +219,10 @@ class GSD_Admin {
      * Render directory settings section.
      */
     public function render_directory_section() {
-        $page_id = get_option('gsd_directory_page_id');
-        $page_link = $page_id ? get_edit_post_link($page_id) : '';
-        echo '<p>' . __('Configure how the directory page displays.', 'gun-shop-directory');
-        if ($page_link) {
-            echo ' <a href="' . esc_url($page_link) . '" target="_blank">' . __('Edit Directory Page', 'gun-shop-directory') . '</a>';
+        $archive_url = get_post_type_archive_link('gsd_listing');
+        echo '<p>' . __('Configure how the directory displays.', 'gun-shop-directory');
+        if ($archive_url) {
+            echo ' ' . sprintf(__('The directory is available at: <a href="%s" target="_blank">%s</a>', 'gun-shop-directory'), esc_url($archive_url), esc_url($archive_url));
         }
         echo '</p>';
     }
