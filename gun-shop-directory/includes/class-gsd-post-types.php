@@ -11,6 +11,7 @@ class GSD_Post_Types {
         add_action('save_post_gsd_listing', array($this, 'save_listing_meta'));
         add_filter('query_vars', array($this, 'add_query_vars'));
         add_action('parse_request', array($this, 'handle_search_request'));
+        add_action('template_redirect', array($this, 'fix_search_404'));
     }
 
     public function register_post_types() {
@@ -265,6 +266,31 @@ class GSD_Post_Types {
             update_post_meta($post_id, "_gsd_hours_{$day}_open", sanitize_text_field($_POST["gsd_hours_{$day}_open"] ?? ''));
             update_post_meta($post_id, "_gsd_hours_{$day}_close", sanitize_text_field($_POST["gsd_hours_{$day}_close"] ?? ''));
             update_post_meta($post_id, "_gsd_hours_{$day}_closed", isset($_POST["gsd_hours_{$day}_closed"]) ? '1' : '0');
+        }
+    }
+
+    /**
+     * Fix 404 errors on search pages
+     */
+    public function fix_search_404() {
+        global $wp_query;
+
+        // Check if we have search parameters
+        if (empty($_GET['gsd_location']) && empty($_GET['gsd_search']) && empty($_GET['gsd_type'])) {
+            return;
+        }
+
+        // Check if URL contains gun-shops
+        if (strpos($_SERVER['REQUEST_URI'], 'gun-shops') === false) {
+            return;
+        }
+
+        // If it's a 404, fix it
+        if (is_404()) {
+            status_header(200);
+            $wp_query->is_404 = false;
+            $wp_query->is_archive = true;
+            $wp_query->is_post_type_archive = true;
         }
     }
 }
