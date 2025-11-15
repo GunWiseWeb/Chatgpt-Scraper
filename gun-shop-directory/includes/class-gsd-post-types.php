@@ -10,8 +10,8 @@ class GSD_Post_Types {
         add_action('add_meta_boxes', array($this, 'add_meta_boxes'));
         add_action('save_post_gsd_listing', array($this, 'save_listing_meta'));
         add_filter('query_vars', array($this, 'add_query_vars'));
-        add_action('parse_request', array($this, 'handle_search_request'));
-        add_action('template_redirect', array($this, 'fix_search_404'));
+        add_action('pre_get_posts', array($this, 'modify_archive_query'));
+        add_action('template_redirect', array($this, 'prevent_search_404'));
     }
 
     public function register_post_types() {
@@ -65,16 +65,27 @@ class GSD_Post_Types {
     }
 
     /**
-     * Handle search requests - this is the key to making search work
+     * Modify the main query for gsd_listing archives
      */
-    public function handle_search_request($wp) {
-        // Only handle gun-shops archive requests
-        if (!isset($wp->query_vars['post_type']) || $wp->query_vars['post_type'] !== 'gsd_listing') {
-            // Check if URL contains gun-shops
-            if (strpos($_SERVER['REQUEST_URI'], 'gun-shops') === false) {
+    public function modify_archive_query($query) {
+        // Only modify the main query on the frontend for our post type archive
+        if (is_admin() || !$query->is_main_query()) {
+            return;
+        }
+
+        // Only handle gsd_listing archives
+        if (!is_post_type_archive('gsd_listing') && !$query->is_post_type_archive('gsd_listing')) {
+            // Check if we have search params and URL contains gun-shops
+            if ((isset($_GET['gsd_location']) || isset($_GET['gsd_search']) || isset($_GET['gsd_type'])) &&
+                strpos($_SERVER['REQUEST_URI'], 'gun-shops') !== false) {
+                // Force it to be a post type archive
+                $query->set('post_type', 'gsd_listing');
+                $query->is_archive = true;
+                $query->is_post_type_archive = true;
+                $query->is_404 = false;
+            } else {
                 return;
             }
-            $wp->query_vars['post_type'] = 'gsd_listing';
         }
 
         // Check for search parameters
@@ -82,7 +93,7 @@ class GSD_Post_Types {
         $search = isset($_GET['gsd_search']) ? sanitize_text_field($_GET['gsd_search']) : '';
         $type = isset($_GET['gsd_type']) ? sanitize_text_field($_GET['gsd_type']) : '';
 
-        // If we have location search, find matching post IDs
+        // If we have location search, find matching post IDs via direct SQL
         if (!empty($location)) {
             global $wpdb;
 
@@ -103,26 +114,26 @@ class GSD_Post_Types {
             ));
 
             if (!empty($post_ids)) {
-                $wp->query_vars['post__in'] = $post_ids;
+                $query->set('post__in', $post_ids);
             } else {
-                $wp->query_vars['post__in'] = array(0); // No results
+                $query->set('post__in', array(0)); // No results
             }
         }
 
         // Handle keyword search
         if (!empty($search)) {
-            $wp->query_vars['s'] = $search;
+            $query->set('s', $search);
         }
 
         // Handle type filter
         if (!empty($type)) {
-            $wp->query_vars['meta_query'] = array(
-                array(
-                    'key' => '_gsd_business_type',
-                    'value' => $type,
-                    'compare' => '='
-                )
+            $meta_query = $query->get('meta_query') ?: array();
+            $meta_query[] = array(
+                'key' => '_gsd_business_type',
+                'value' => $type,
+                'compare' => '='
             );
+            $query->set('meta_query', $meta_query);
         }
     }
 
@@ -270,27 +281,32 @@ class GSD_Post_Types {
     }
 
     /**
-     * Fix 404 errors on search pages
+     * Prevent 404 errors on gun shop search pages
      */
-    public function fix_search_404() {
+    public function prevent_search_404() {
         global $wp_query;
 
-        // Check if we have search parameters
+        // Only run if we have search parameters and are on gun-shops URL
         if (empty($_GET['gsd_location']) && empty($_GET['gsd_search']) && empty($_GET['gsd_type'])) {
             return;
         }
 
-        // Check if URL contains gun-shops
         if (strpos($_SERVER['REQUEST_URI'], 'gun-shops') === false) {
             return;
         }
 
-        // If it's a 404, fix it
+        // If WordPress thinks this is a 404, correct it
         if (is_404()) {
             status_header(200);
             $wp_query->is_404 = false;
             $wp_query->is_archive = true;
             $wp_query->is_post_type_archive = true;
+
+            // Make sure the post type is set
+            if (!isset($wp_query->query_vars['post_type'])) {
+                $wp_query->query_vars['post_type'] = 'gsd_listing';
+                $wp_query->set('post_type', 'gsd_listing');
+            }
         }
     }
 }
