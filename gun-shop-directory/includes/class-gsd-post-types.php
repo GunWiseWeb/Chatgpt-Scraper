@@ -418,13 +418,33 @@ class GSD_Post_Types {
             return;
         }
 
-        // Only for gun shop archives
-        if (!is_post_type_archive('gsd_listing') && !is_tax('gsd_category') && !is_tax('gsd_location')) {
+        // Check if we have gun shop search parameters
+        $has_search_params = (
+            !empty($_GET['gsd_search']) ||
+            !empty($_GET['gsd_location']) ||
+            !empty($_GET['gsd_type']) ||
+            !empty($_GET['gsd_category'])
+        );
+
+        // Check if this is a gun shop search (either archive or has our search parameters)
+        $is_gun_shop_search = (
+            is_post_type_archive('gsd_listing') ||
+            is_tax('gsd_category') ||
+            is_tax('gsd_location') ||
+            ($has_search_params && strpos($_SERVER['REQUEST_URI'], 'gun-shops') !== false)
+        );
+
+        if (!$is_gun_shop_search) {
             return;
         }
 
+        // Force this to be a gsd_listing query
+        if ($has_search_params) {
+            $query->set('post_type', 'gsd_listing');
+        }
+
         // Handle location search parameter
-        $location_search = get_query_var('gsd_location');
+        $location_search = isset($_GET['gsd_location']) ? sanitize_text_field($_GET['gsd_location']) : get_query_var('gsd_location');
         if (!empty($location_search)) {
             $meta_query = $query->get('meta_query') ?: array();
 
@@ -450,13 +470,13 @@ class GSD_Post_Types {
         }
 
         // Handle general search parameter
-        $general_search = get_query_var('gsd_search');
+        $general_search = isset($_GET['gsd_search']) ? sanitize_text_field($_GET['gsd_search']) : get_query_var('gsd_search');
         if (!empty($general_search)) {
             $query->set('s', $general_search);
         }
 
         // Handle business type filter
-        $business_type = get_query_var('gsd_type');
+        $business_type = isset($_GET['gsd_type']) ? sanitize_text_field($_GET['gsd_type']) : get_query_var('gsd_type');
         if (!empty($business_type)) {
             $meta_query = $query->get('meta_query') ?: array();
             $meta_query[] = array(
@@ -468,7 +488,7 @@ class GSD_Post_Types {
         }
 
         // Handle category filter
-        $category = get_query_var('gsd_category');
+        $category = isset($_GET['gsd_category']) ? sanitize_text_field($_GET['gsd_category']) : get_query_var('gsd_category');
         if (!empty($category)) {
             $tax_query = $query->get('tax_query') ?: array();
             $tax_query[] = array(
