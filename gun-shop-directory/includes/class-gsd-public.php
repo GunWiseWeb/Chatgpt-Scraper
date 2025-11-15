@@ -880,68 +880,68 @@ class GSD_Public {
         $type = isset($_POST['gsd_type']) ? sanitize_text_field($_POST['gsd_type']) : '';
         $layout = isset($_POST['layout']) ? sanitize_text_field($_POST['layout']) : 'grid-large';
 
-        global $wpdb;
+        // Build query args
+        $args = array(
+            'post_type' => 'gsd_listing',
+            'post_status' => 'publish',
+            'posts_per_page' => -1,
+            'orderby' => 'date',
+            'order' => 'DESC',
+        );
 
-        $post_ids = array();
-
-        // Location search (city, state, zip)
+        // Location search (city, state, or zip)
         if (!empty($location)) {
-            $post_ids = $wpdb->get_col($wpdb->prepare(
-                "SELECT DISTINCT p.ID
-                FROM {$wpdb->posts} p
-                INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
-                WHERE p.post_type = 'gsd_listing'
-                AND p.post_status = 'publish'
-                AND (
-                    (pm.meta_key = '_gsd_city' AND pm.meta_value LIKE %s) OR
-                    (pm.meta_key = '_gsd_state' AND pm.meta_value LIKE %s) OR
-                    (pm.meta_key = '_gsd_zip' AND pm.meta_value LIKE %s)
-                )
-                ORDER BY p.post_date DESC",
-                '%' . $wpdb->esc_like($location) . '%',
-                '%' . $wpdb->esc_like($location) . '%',
-                '%' . $wpdb->esc_like($location) . '%'
-            ));
-        }
-        // Keyword search (title, content)
-        elseif (!empty($search)) {
-            $post_ids = $wpdb->get_col($wpdb->prepare(
-                "SELECT DISTINCT ID
-                FROM {$wpdb->posts}
-                WHERE post_type = 'gsd_listing'
-                AND post_status = 'publish'
-                AND (post_title LIKE %s OR post_content LIKE %s)
-                ORDER BY post_date DESC",
-                '%' . $wpdb->esc_like($search) . '%',
-                '%' . $wpdb->esc_like($search) . '%'
-            ));
-        }
-        // No search criteria, get all
-        else {
-            $post_ids = $wpdb->get_col(
-                "SELECT ID
-                FROM {$wpdb->posts}
-                WHERE post_type = 'gsd_listing'
-                AND post_status = 'publish'
-                ORDER BY post_date DESC"
+            $args['meta_query'] = array(
+                'relation' => 'OR',
+                array(
+                    'key' => '_gsd_city',
+                    'value' => $location,
+                    'compare' => 'LIKE',
+                ),
+                array(
+                    'key' => '_gsd_state',
+                    'value' => $location,
+                    'compare' => 'LIKE',
+                ),
+                array(
+                    'key' => '_gsd_zip',
+                    'value' => $location,
+                    'compare' => 'LIKE',
+                ),
             );
         }
-
-        // Filter by type if specified
-        if (!empty($type) && !empty($post_ids)) {
-            $filtered_ids = array();
-            foreach ($post_ids as $post_id) {
-                $business_type = get_post_meta($post_id, '_gsd_business_type', true);
-                if ($business_type === $type) {
-                    $filtered_ids[] = $post_id;
-                }
-            }
-            $post_ids = $filtered_ids;
+        // Keyword search (title/content)
+        elseif (!empty($search)) {
+            $args['s'] = $search;
         }
+
+        // Business type filter
+        if (!empty($type)) {
+            if (!empty($location)) {
+                // Already has meta_query, add to it
+                $args['meta_query'][] = array(
+                    'key' => '_gsd_business_type',
+                    'value' => $type,
+                    'compare' => '=',
+                );
+                $args['meta_query']['relation'] = 'AND';
+            } else {
+                // No existing meta_query
+                $args['meta_query'] = array(
+                    array(
+                        'key' => '_gsd_business_type',
+                        'value' => $type,
+                        'compare' => '=',
+                    ),
+                );
+            }
+        }
+
+        $query = new WP_Query($args);
 
         ob_start();
 
-        if (!empty($post_ids)) {
+        if ($query->have_posts()) {
             $container_classes = array(
                 'grid-large' => 'gsd-listings-grid gsd-grid-large',
                 'grid-compact' => 'gsd-listings-grid gsd-grid-compact',
@@ -953,16 +953,19 @@ class GSD_Public {
 
             echo '<div class="' . esc_attr($container_class) . '">';
 
-            foreach ($post_ids as $post_id) {
-                $this->render_listing_by_layout($post_id, $layout);
+            while ($query->have_posts()) {
+                $query->the_post();
+                $this->render_listing_by_layout(get_the_ID(), $layout);
             }
 
             echo '</div>';
 
+            wp_reset_postdata();
+
             $results_html = ob_get_clean();
             wp_send_json_success(array(
                 'html' => $results_html,
-                'count' => count($post_ids)
+                'count' => $query->found_posts
             ));
         } else {
             echo '<div class="gsd-no-results">';
