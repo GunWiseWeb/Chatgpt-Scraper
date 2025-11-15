@@ -7,6 +7,8 @@ A professional WordPress plugin for creating a business directory for gun shops 
 ### Business Listings
 - Custom post type for gun shop listings
 - Support for both brick-and-mortar and e-commerce stores
+- **Frontend listing submission** - logged-in users can submit listings
+- **Pending approval system** - all user submissions require admin approval
 - Detailed business information (address, contact details, hours)
 - Featured images and photo galleries
 - Categories and location taxonomies
@@ -35,9 +37,11 @@ A professional WordPress plugin for creating a business directory for gun shops 
 - Customizable options
 
 ### Frontend Display
-- Professional, modern design
-- Responsive layout
+- **Premium, modern design** with gradients and animations
+- **Fancy styling** - professional color schemes and visual effects
+- Responsive layout for all devices
 - Custom templates (archive and single views)
+- Interactive hover effects and smooth transitions
 - Star rating visualizations
 - Business hours display
 - Social media integration
@@ -78,6 +82,7 @@ A professional WordPress plugin for creating a business directory for gun shops 
 Navigate to **Gun Shops → Settings** to configure:
 - **Require Review Approval**: Reviews must be approved before appearing
 - **Allow Anonymous Reviews**: Let non-logged-in users submit reviews
+- **Allow User Listing Submissions**: Let logged-in users submit listings (pending approval)
 - **Listings Per Page**: Number of listings to display
 - **Enable Map Display**: Show/hide Google Maps
 - **Google Maps API Key**: Required for map functionality
@@ -102,6 +107,13 @@ Navigate to **Gun Shops → Settings** to configure:
 ```
 
 Displays a comprehensive search form with filters for location, category, and business type.
+
+#### Submit Listing Form
+```
+[gsd_submit_listing]
+```
+
+Displays a frontend form that allows logged-in users to submit their gun shop listings. Submissions are set to "pending" status and require admin approval before appearing on the site.
 
 ## File Structure
 

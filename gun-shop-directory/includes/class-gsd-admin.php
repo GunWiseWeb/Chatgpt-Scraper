@@ -93,6 +93,7 @@ class GSD_Admin {
         // General settings
         register_setting('gsd_general_settings', 'gsd_require_approval');
         register_setting('gsd_general_settings', 'gsd_allow_anonymous_reviews');
+        register_setting('gsd_general_settings', 'gsd_allow_user_submissions');
         register_setting('gsd_general_settings', 'gsd_items_per_page');
         register_setting('gsd_general_settings', 'gsd_google_maps_api_key');
         register_setting('gsd_general_settings', 'gsd_enable_map');
@@ -120,6 +121,15 @@ class GSD_Admin {
             'gsd_general_settings',
             'gsd_general_section',
             array('option' => 'gsd_allow_anonymous_reviews', 'description' => __('Allow non-logged-in users to submit reviews', 'gun-shop-directory'))
+        );
+
+        add_settings_field(
+            'gsd_allow_user_submissions',
+            __('Allow User Listing Submissions', 'gun-shop-directory'),
+            array($this, 'render_checkbox_field'),
+            'gsd_general_settings',
+            'gsd_general_section',
+            array('option' => 'gsd_allow_user_submissions', 'description' => __('Allow logged-in users to submit listings (pending approval)', 'gun-shop-directory'))
         );
 
         add_settings_field(

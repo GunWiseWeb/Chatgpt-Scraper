@@ -300,4 +300,184 @@ class GSD_Public {
 
         return isset($labels[$type]) ? $labels[$type] : $type;
     }
+
+    /**
+     * Submit listing shortcode - frontend listing submission form.
+     */
+    public function submit_listing_shortcode($atts) {
+        // Check if user is logged in
+        if (!is_user_logged_in()) {
+            return '<div class="gsd-submit-listing-wrapper"><p>' . sprintf(__('Please <a href="%s">log in</a> to submit a listing.', 'gun-shop-directory'), wp_login_url(get_permalink())) . '</p></div>';
+        }
+
+        // Check if user submissions are enabled
+        if (get_option('gsd_allow_user_submissions', '1') != '1') {
+            return '<div class="gsd-submit-listing-wrapper"><p>' . __('Listing submissions are currently disabled.', 'gun-shop-directory') . '</p></div>';
+        }
+
+        ob_start();
+        ?>
+        <div class="gsd-submit-listing-wrapper">
+            <h2><?php _e('Submit Your Gun Shop Listing', 'gun-shop-directory'); ?></h2>
+
+            <?php if (isset($_GET['submitted']) && $_GET['submitted'] == 'true') : ?>
+                <div class="gsd-success-message">
+                    <?php _e('Thank you! Your listing has been submitted and is pending approval.', 'gun-shop-directory'); ?>
+                </div>
+            <?php endif; ?>
+
+            <form id="gsd-submit-listing-form" class="gsd-submit-form" method="post" enctype="multipart/form-data">
+                <?php wp_nonce_field('gsd_submit_listing', 'gsd_submit_nonce'); ?>
+
+                <!-- Basic Information -->
+                <div class="gsd-form-section">
+                    <h3><?php _e('Basic Information', 'gun-shop-directory'); ?></h3>
+
+                    <div class="gsd-form-group">
+                        <label><?php _e('Business Name', 'gun-shop-directory'); ?> <span class="required">*</span></label>
+                        <input type="text" name="business_name" required>
+                    </div>
+
+                    <div class="gsd-form-group">
+                        <label><?php _e('Business Type', 'gun-shop-directory'); ?> <span class="required">*</span></label>
+                        <select name="business_type" required>
+                            <option value=""><?php _e('Select...', 'gun-shop-directory'); ?></option>
+                            <option value="brick_mortar"><?php _e('Brick & Mortar', 'gun-shop-directory'); ?></option>
+                            <option value="ecommerce"><?php _e('E-commerce Only', 'gun-shop-directory'); ?></option>
+                            <option value="both"><?php _e('Both', 'gun-shop-directory'); ?></option>
+                        </select>
+                    </div>
+
+                    <div class="gsd-form-group">
+                        <label><?php _e('Description', 'gun-shop-directory'); ?> <span class="required">*</span></label>
+                        <textarea name="description" required></textarea>
+                    </div>
+                </div>
+
+                <!-- Contact Information -->
+                <div class="gsd-form-section">
+                    <h3><?php _e('Contact Information', 'gun-shop-directory'); ?></h3>
+
+                    <div class="gsd-form-row">
+                        <div class="gsd-form-group">
+                            <label><?php _e('Phone', 'gun-shop-directory'); ?> <span class="required">*</span></label>
+                            <input type="tel" name="phone" required>
+                        </div>
+
+                        <div class="gsd-form-group">
+                            <label><?php _e('Email', 'gun-shop-directory'); ?> <span class="required">*</span></label>
+                            <input type="email" name="email" required>
+                        </div>
+                    </div>
+
+                    <div class="gsd-form-group">
+                        <label><?php _e('Website', 'gun-shop-directory'); ?></label>
+                        <input type="url" name="website">
+                    </div>
+                </div>
+
+                <!-- Address -->
+                <div class="gsd-form-section">
+                    <h3><?php _e('Address', 'gun-shop-directory'); ?></h3>
+
+                    <div class="gsd-form-group">
+                        <label><?php _e('Street Address', 'gun-shop-directory'); ?> <span class="required">*</span></label>
+                        <input type="text" name="address" required>
+                    </div>
+
+                    <div class="gsd-form-row">
+                        <div class="gsd-form-group">
+                            <label><?php _e('City', 'gun-shop-directory'); ?> <span class="required">*</span></label>
+                            <input type="text" name="city" required>
+                        </div>
+
+                        <div class="gsd-form-group">
+                            <label><?php _e('State', 'gun-shop-directory'); ?> <span class="required">*</span></label>
+                            <input type="text" name="state" required>
+                        </div>
+                    </div>
+
+                    <div class="gsd-form-row">
+                        <div class="gsd-form-group">
+                            <label><?php _e('ZIP Code', 'gun-shop-directory'); ?> <span class="required">*</span></label>
+                            <input type="text" name="zip" required>
+                        </div>
+
+                        <div class="gsd-form-group">
+                            <label><?php _e('Country', 'gun-shop-directory'); ?></label>
+                            <input type="text" name="country" value="United States">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="gsd-form-group">
+                    <button type="submit" class="gsd-button gsd-button-secondary" style="width: 100%; font-size: 1.1em; padding: 15px;">
+                        <?php _e('Submit Listing for Approval', 'gun-shop-directory'); ?>
+                    </button>
+                </div>
+
+                <div class="gsd-form-message"></div>
+            </form>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    /**
+     * Handle frontend listing submission.
+     */
+    public function handle_listing_submission() {
+        if (!isset($_POST['gsd_submit_nonce']) || !wp_verify_nonce($_POST['gsd_submit_nonce'], 'gsd_submit_listing')) {
+            return;
+        }
+
+        if (!is_user_logged_in()) {
+            return;
+        }
+
+        if (get_option('gsd_allow_user_submissions', '1') != '1') {
+            return;
+        }
+
+        // Sanitize and validate inputs
+        $business_name = sanitize_text_field($_POST['business_name']);
+        $business_type = sanitize_text_field($_POST['business_type']);
+        $description = wp_kses_post($_POST['description']);
+        $phone = sanitize_text_field($_POST['phone']);
+        $email = sanitize_email($_POST['email']);
+        $website = esc_url_raw($_POST['website']);
+        $address = sanitize_text_field($_POST['address']);
+        $city = sanitize_text_field($_POST['city']);
+        $state = sanitize_text_field($_POST['state']);
+        $zip = sanitize_text_field($_POST['zip']);
+        $country = sanitize_text_field($_POST['country']);
+
+        // Create the listing post
+        $post_data = array(
+            'post_title' => $business_name,
+            'post_content' => $description,
+            'post_type' => 'gsd_listing',
+            'post_status' => 'pending', // Pending approval
+            'post_author' => get_current_user_id(),
+        );
+
+        $listing_id = wp_insert_post($post_data);
+
+        if ($listing_id && !is_wp_error($listing_id)) {
+            // Save meta data
+            update_post_meta($listing_id, '_gsd_business_type', $business_type);
+            update_post_meta($listing_id, '_gsd_phone', $phone);
+            update_post_meta($listing_id, '_gsd_email', $email);
+            update_post_meta($listing_id, '_gsd_website', $website);
+            update_post_meta($listing_id, '_gsd_address', $address);
+            update_post_meta($listing_id, '_gsd_city', $city);
+            update_post_meta($listing_id, '_gsd_state', $state);
+            update_post_meta($listing_id, '_gsd_zip', $zip);
+            update_post_meta($listing_id, '_gsd_country', $country);
+
+            // Redirect with success message
+            wp_redirect(add_query_arg('submitted', 'true', get_permalink()));
+            exit;
+        }
+    }
 }

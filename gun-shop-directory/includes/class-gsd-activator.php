@@ -58,6 +58,7 @@ class GSD_Activator {
         add_option('gsd_version', GSD_VERSION);
         add_option('gsd_require_approval', '1');
         add_option('gsd_allow_anonymous_reviews', '0');
+        add_option('gsd_allow_user_submissions', '1');
         add_option('gsd_items_per_page', '12');
         add_option('gsd_google_maps_api_key', '');
         add_option('gsd_enable_map', '1');

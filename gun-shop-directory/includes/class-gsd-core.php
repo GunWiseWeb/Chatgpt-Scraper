@@ -76,6 +76,10 @@ class GSD_Core {
         // Shortcodes
         add_shortcode('gsd_listings', array($public, 'listings_shortcode'));
         add_shortcode('gsd_search', array($public, 'search_shortcode'));
+        add_shortcode('gsd_submit_listing', array($public, 'submit_listing_shortcode'));
+
+        // Handle listing submission
+        add_action('template_redirect', array($public, 'handle_listing_submission'));
     }
 
     /**
