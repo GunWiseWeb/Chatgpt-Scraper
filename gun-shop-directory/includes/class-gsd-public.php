@@ -882,36 +882,50 @@ class GSD_Public {
 
         global $wpdb;
 
-        // Build the query
-        $where = "WHERE p.post_type = 'gsd_listing' AND p.post_status = 'publish'";
-        $join = "FROM {$wpdb->posts} p";
+        $post_ids = array();
 
-        // Location search
+        // Location search (city, state, zip)
         if (!empty($location)) {
-            $join .= " INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id";
-            $where .= $wpdb->prepare(
-                " AND (
+            $post_ids = $wpdb->get_col($wpdb->prepare(
+                "SELECT DISTINCT p.ID
+                FROM {$wpdb->posts} p
+                INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
+                WHERE p.post_type = 'gsd_listing'
+                AND p.post_status = 'publish'
+                AND (
                     (pm.meta_key = '_gsd_city' AND pm.meta_value LIKE %s) OR
                     (pm.meta_key = '_gsd_state' AND pm.meta_value LIKE %s) OR
                     (pm.meta_key = '_gsd_zip' AND pm.meta_value LIKE %s)
-                )",
+                )
+                ORDER BY p.post_date DESC",
                 '%' . $wpdb->esc_like($location) . '%',
                 '%' . $wpdb->esc_like($location) . '%',
                 '%' . $wpdb->esc_like($location) . '%'
-            );
+            ));
         }
-
-        // Keyword search
-        if (!empty($search)) {
-            $where .= $wpdb->prepare(
-                " AND (p.post_title LIKE %s OR p.post_content LIKE %s)",
+        // Keyword search (title, content)
+        elseif (!empty($search)) {
+            $post_ids = $wpdb->get_col($wpdb->prepare(
+                "SELECT DISTINCT ID
+                FROM {$wpdb->posts}
+                WHERE post_type = 'gsd_listing'
+                AND post_status = 'publish'
+                AND (post_title LIKE %s OR post_content LIKE %s)
+                ORDER BY post_date DESC",
                 '%' . $wpdb->esc_like($search) . '%',
                 '%' . $wpdb->esc_like($search) . '%'
+            ));
+        }
+        // No search criteria, get all
+        else {
+            $post_ids = $wpdb->get_col(
+                "SELECT ID
+                FROM {$wpdb->posts}
+                WHERE post_type = 'gsd_listing'
+                AND post_status = 'publish'
+                ORDER BY post_date DESC"
             );
         }
-
-        $sql = "SELECT DISTINCT p.ID {$join} {$where} ORDER BY p.post_date DESC";
-        $post_ids = $wpdb->get_col($sql);
 
         // Filter by type if specified
         if (!empty($type) && !empty($post_ids)) {
