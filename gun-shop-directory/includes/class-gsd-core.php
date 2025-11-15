@@ -55,6 +55,8 @@ class GSD_Core {
         add_action('wp_ajax_nopriv_gsd_submit_claim', array($public, 'ajax_submit_claim'));
         add_action('wp_ajax_gsd_submit_review', array($public, 'handle_review_submission'));
         add_action('wp_ajax_nopriv_gsd_submit_review', array($public, 'handle_review_submission'));
+        add_action('wp_ajax_gsd_search_listings', array($public, 'ajax_search_listings'));
+        add_action('wp_ajax_nopriv_gsd_search_listings', array($public, 'ajax_search_listings'));
     }
 
     public function run() {

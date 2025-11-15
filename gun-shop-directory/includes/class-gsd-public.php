@@ -870,4 +870,97 @@ class GSD_Public {
             'message' => __('Your claim has been submitted successfully! An administrator will review it shortly.', 'gun-shop-directory')
         ));
     }
+
+    /**
+     * AJAX search handler
+     */
+    public function ajax_search_listings() {
+        $location = isset($_POST['gsd_location']) ? sanitize_text_field($_POST['gsd_location']) : '';
+        $search = isset($_POST['gsd_search']) ? sanitize_text_field($_POST['gsd_search']) : '';
+        $type = isset($_POST['gsd_type']) ? sanitize_text_field($_POST['gsd_type']) : '';
+        $layout = isset($_POST['layout']) ? sanitize_text_field($_POST['layout']) : 'grid-large';
+
+        global $wpdb;
+
+        // Build the query
+        $where = "WHERE p.post_type = 'gsd_listing' AND p.post_status = 'publish'";
+        $join = "FROM {$wpdb->posts} p";
+
+        // Location search
+        if (!empty($location)) {
+            $join .= " INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id";
+            $where .= $wpdb->prepare(
+                " AND (
+                    (pm.meta_key = '_gsd_city' AND pm.meta_value LIKE %s) OR
+                    (pm.meta_key = '_gsd_state' AND pm.meta_value LIKE %s) OR
+                    (pm.meta_key = '_gsd_zip' AND pm.meta_value LIKE %s)
+                )",
+                '%' . $wpdb->esc_like($location) . '%',
+                '%' . $wpdb->esc_like($location) . '%',
+                '%' . $wpdb->esc_like($location) . '%'
+            );
+        }
+
+        // Keyword search
+        if (!empty($search)) {
+            $where .= $wpdb->prepare(
+                " AND (p.post_title LIKE %s OR p.post_content LIKE %s)",
+                '%' . $wpdb->esc_like($search) . '%',
+                '%' . $wpdb->esc_like($search) . '%'
+            );
+        }
+
+        $sql = "SELECT DISTINCT p.ID {$join} {$where} ORDER BY p.post_date DESC";
+        $post_ids = $wpdb->get_col($sql);
+
+        // Filter by type if specified
+        if (!empty($type) && !empty($post_ids)) {
+            $filtered_ids = array();
+            foreach ($post_ids as $post_id) {
+                $business_type = get_post_meta($post_id, '_gsd_business_type', true);
+                if ($business_type === $type) {
+                    $filtered_ids[] = $post_id;
+                }
+            }
+            $post_ids = $filtered_ids;
+        }
+
+        ob_start();
+
+        if (!empty($post_ids)) {
+            $container_classes = array(
+                'grid-large' => 'gsd-listings-grid gsd-grid-large',
+                'grid-compact' => 'gsd-listings-grid gsd-grid-compact',
+                'grid-minimal' => 'gsd-listings-grid gsd-grid-minimal',
+                'list-simple' => 'gsd-listings-list gsd-list-simple',
+                'list-detailed' => 'gsd-listings-list gsd-list-detailed',
+            );
+            $container_class = isset($container_classes[$layout]) ? $container_classes[$layout] : $container_classes['grid-large'];
+
+            echo '<div class="' . esc_attr($container_class) . '">';
+
+            foreach ($post_ids as $post_id) {
+                $this->render_listing_by_layout($post_id, $layout);
+            }
+
+            echo '</div>';
+
+            $results_html = ob_get_clean();
+            wp_send_json_success(array(
+                'html' => $results_html,
+                'count' => count($post_ids)
+            ));
+        } else {
+            echo '<div class="gsd-no-results">';
+            echo '<h2>' . __('No listings found', 'gun-shop-directory') . '</h2>';
+            echo '<p>' . __('Try adjusting your search criteria.', 'gun-shop-directory') . '</p>';
+            echo '</div>';
+
+            $results_html = ob_get_clean();
+            wp_send_json_success(array(
+                'html' => $results_html,
+                'count' => 0
+            ));
+        }
+    }
 }

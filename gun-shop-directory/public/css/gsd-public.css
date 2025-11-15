@@ -1881,4 +1881,20 @@ body.gsd-modal-open {
         width: 100%;
     }
 }
+
+/* ===========================
+   Spinner Animation
+   =========================== */
+@keyframes gsd-spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.gsd-spin {
+    animation: gsd-spin 1s linear infinite;
+    display: inline-block;
 }

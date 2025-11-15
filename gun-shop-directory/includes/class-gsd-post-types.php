@@ -10,8 +10,6 @@ class GSD_Post_Types {
         add_action('add_meta_boxes', array($this, 'add_meta_boxes'));
         add_action('save_post_gsd_listing', array($this, 'save_listing_meta'));
         add_filter('query_vars', array($this, 'add_query_vars'));
-        add_action('pre_get_posts', array($this, 'modify_archive_query'));
-        add_action('template_redirect', array($this, 'prevent_search_404'));
     }
 
     public function register_post_types() {
@@ -62,79 +60,6 @@ class GSD_Post_Types {
         $vars[] = 'gsd_location';
         $vars[] = 'gsd_type';
         return $vars;
-    }
-
-    /**
-     * Modify the main query for gsd_listing archives
-     */
-    public function modify_archive_query($query) {
-        // Only modify the main query on the frontend for our post type archive
-        if (is_admin() || !$query->is_main_query()) {
-            return;
-        }
-
-        // Only handle gsd_listing archives
-        if (!is_post_type_archive('gsd_listing') && !$query->is_post_type_archive('gsd_listing')) {
-            // Check if we have search params and URL contains gun-shops
-            if ((isset($_GET['gsd_location']) || isset($_GET['gsd_search']) || isset($_GET['gsd_type'])) &&
-                strpos($_SERVER['REQUEST_URI'], 'gun-shops') !== false) {
-                // Force it to be a post type archive
-                $query->set('post_type', 'gsd_listing');
-                $query->is_archive = true;
-                $query->is_post_type_archive = true;
-                $query->is_404 = false;
-            } else {
-                return;
-            }
-        }
-
-        // Check for search parameters
-        $location = isset($_GET['gsd_location']) ? sanitize_text_field($_GET['gsd_location']) : '';
-        $search = isset($_GET['gsd_search']) ? sanitize_text_field($_GET['gsd_search']) : '';
-        $type = isset($_GET['gsd_type']) ? sanitize_text_field($_GET['gsd_type']) : '';
-
-        // If we have location search, find matching post IDs via direct SQL
-        if (!empty($location)) {
-            global $wpdb;
-
-            $post_ids = $wpdb->get_col($wpdb->prepare(
-                "SELECT DISTINCT p.ID
-                FROM {$wpdb->posts} p
-                INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
-                WHERE p.post_type = 'gsd_listing'
-                AND p.post_status = 'publish'
-                AND (
-                    (pm.meta_key = '_gsd_city' AND pm.meta_value LIKE %s) OR
-                    (pm.meta_key = '_gsd_state' AND pm.meta_value LIKE %s) OR
-                    (pm.meta_key = '_gsd_zip' AND pm.meta_value LIKE %s)
-                )",
-                '%' . $wpdb->esc_like($location) . '%',
-                '%' . $wpdb->esc_like($location) . '%',
-                '%' . $wpdb->esc_like($location) . '%'
-            ));
-
-            if (!empty($post_ids)) {
-                $query->set('post__in', $post_ids);
-            } else {
-                $query->set('post__in', array(0)); // No results
-            }
-        }
-
-        // Handle keyword search
-        if (!empty($search)) {
-            $query->set('s', $search);
-        }
-
-        // Handle type filter
-        if (!empty($type)) {
-            $meta_query = $query->get('meta_query') ?: array();
-            $meta_query[] = array(
-                'key' => '_gsd_business_type',
-                'value' => $type,
-                'compare' => '='
-            );
-            $query->set('meta_query', $meta_query);
-        }
     }
 
     public function add_meta_boxes() {
@@ -280,33 +205,4 @@ class GSD_Post_Types {
         }
     }
 
-    /**
-     * Prevent 404 errors on gun shop search pages
-     */
-    public function prevent_search_404() {
-        global $wp_query;
-
-        // Only run if we have search parameters and are on gun-shops URL
-        if (empty($_GET['gsd_location']) && empty($_GET['gsd_search']) && empty($_GET['gsd_type'])) {
-            return;
-        }
-
-        if (strpos($_SERVER['REQUEST_URI'], 'gun-shops') === false) {
-            return;
-        }
-
-        // If WordPress thinks this is a 404, correct it
-        if (is_404()) {
-            status_header(200);
-            $wp_query->is_404 = false;
-            $wp_query->is_archive = true;
-            $wp_query->is_post_type_archive = true;
-
-            // Make sure the post type is set
-            if (!isset($wp_query->query_vars['post_type'])) {
-                $wp_query->query_vars['post_type'] = 'gsd_listing';
-                $wp_query->set('post_type', 'gsd_listing');
-            }
-        }
-    }
 }
