@@ -1715,7 +1715,26 @@ body.gsd-modal-open {
 }
 
 /* ===========================
-   Tooltip Styles
+   Form Field Description
+   =========================== */
+.gsd-field-description {
+    margin: 5px 0 10px 0;
+    font-size: 0.9em;
+    color: #666;
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    line-height: 1.5;
+}
+
+.gsd-field-description .dashicons {
+    flex-shrink: 0;
+    margin-top: 2px;
+    color: var(--gsd-primary-light);
+}
+
+/* ===========================
+   Tooltip Styles (Legacy)
    =========================== */
 .gsd-tooltip {
     position: relative;
@@ -1730,19 +1749,6 @@ body.gsd-modal-open {
     width: 16px;
     height: 16px;
     color: var(--gsd-primary-light);
-    font-family: dashicons;
-    speak: none;
-    font-style: normal;
-    font-weight: normal;
-    font-variant: normal;
-    text-transform: none;
-    line-height: 1;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-}
-
-.gsd-tooltip .dashicons::before {
-    content: "\f348"; /* dashicons-info icon code */
 }
 
 .gsd-tooltip-text {

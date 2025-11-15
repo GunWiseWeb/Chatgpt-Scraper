@@ -468,11 +468,11 @@ while (have_posts()) : the_post();
                 <div class="gsd-form-group">
                     <label>
                         <?php _e('Verification Details', 'gun-shop-directory'); ?> <span class="required">*</span>
-                        <span class="gsd-tooltip">
-                            <span class="dashicons dashicons-info"></span>
-                            <span class="gsd-tooltip-text"><?php _e('Provide details to help us verify your ownership (e.g., business registration number, EIN, etc.) or send us an email from a certified business email.', 'gun-shop-directory'); ?></span>
-                        </span>
                     </label>
+                    <p class="gsd-field-description">
+                        <span class="dashicons dashicons-info-outline"></span>
+                        <?php _e('Provide details to help us verify your ownership (e.g., business registration number, EIN, etc.) or send us an email from a certified business email.', 'gun-shop-directory'); ?>
+                    </p>
                     <textarea name="verification_details" rows="4" placeholder="<?php _e('Provide verification details...', 'gun-shop-directory'); ?>" required class="gsd-textarea"></textarea>
                 </div>
 

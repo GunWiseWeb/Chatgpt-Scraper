@@ -486,22 +486,34 @@ class GSD_Post_Types {
     public function prevent_search_404() {
         global $wp_query;
 
-        // Only handle gun shop archive searches
-        if (!is_post_type_archive('gsd_listing') && !is_tax('gsd_category') && !is_tax('gsd_location')) {
-            return;
-        }
-
-        // If we have search parameters but got a 404, force it to not be a 404
-        if (is_404() && (
+        // Check if we have gun shop search parameters
+        $has_search_params = (
             !empty($_GET['gsd_search']) ||
             !empty($_GET['gsd_location']) ||
             !empty($_GET['gsd_type']) ||
             !empty($_GET['gsd_category'])
-        )) {
-            status_header(200);
-            $wp_query->is_404 = false;
-            $wp_query->is_archive = true;
-            $wp_query->is_post_type_archive = true;
+        );
+
+        // If we have search parameters and current URL contains gun-shops
+        if ($has_search_params && strpos($_SERVER['REQUEST_URI'], 'gun-shops') !== false) {
+            // Force this to be treated as post type archive, not 404
+            if (is_404() || !$wp_query->is_main_query()) {
+                status_header(200);
+                $wp_query->is_404 = false;
+                $wp_query->is_archive = true;
+                $wp_query->is_post_type_archive = true;
+                $wp_query->post_type = 'gsd_listing';
+
+                // Load the archive template
+                add_filter('template_include', function($template) {
+                    $archive_template = locate_template('archive-gsd_listing.php');
+                    if ($archive_template) {
+                        return $archive_template;
+                    }
+                    // Use plugin template
+                    return plugin_dir_path(dirname(__FILE__)) . 'public/templates/archive-gsd_listing.php';
+                });
+            }
         }
     }
 }
