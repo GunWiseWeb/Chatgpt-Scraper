@@ -544,8 +544,8 @@ class GSD_Post_Types {
 
         // If we have search parameters and current URL contains gun-shops
         if ($has_search_params && strpos($_SERVER['REQUEST_URI'], 'gun-shops') !== false) {
-            // Force this to be treated as post type archive, not 404
-            if (is_404() || !$wp_query->is_main_query()) {
+            // Only fix 404s, don't interfere with valid results
+            if (is_404()) {
                 status_header(200);
                 $wp_query->is_404 = false;
                 $wp_query->is_archive = true;
