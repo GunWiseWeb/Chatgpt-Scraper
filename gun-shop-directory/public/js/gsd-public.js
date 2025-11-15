@@ -341,7 +341,7 @@
 
             var $form = $(this);
             var $submitBtn = $form.find('button[type="submit"]');
-            var $resultsContainer = $('.gsd-listings-grid, .gsd-listings-list').first().parent();
+            var $resultsContainer = $('.gsd-listings-grid, .gsd-listings-list').first();
             var $resultsCount = $('.gsd-results-count');
             var originalBtnText = $submitBtn.html();
 
@@ -368,8 +368,8 @@
                 data: formData,
                 success: function(response) {
                     if (response.success) {
-                        // Update results
-                        $resultsContainer.html(response.data.html);
+                        // Replace just the listings container, not its parent
+                        $resultsContainer.replaceWith(response.data.html);
 
                         // Update count
                         if ($resultsCount.length && response.data.count !== undefined) {
@@ -381,7 +381,7 @@
 
                         // Scroll to results
                         $('html, body').animate({
-                            scrollTop: $resultsContainer.offset().top - 100
+                            scrollTop: $('.gsd-results-bar').offset().top - 100
                         }, 300);
                     } else {
                         alert('Search failed. Please try again.');
