@@ -524,17 +524,12 @@ class GSD_Post_Types {
         global $wpdb;
 
         // Only for main query on frontend with gsd_location parameter
-        if (is_admin() || !$query->is_main_query()) {
+        if (is_admin()) {
             return $join;
         }
 
         $location_search = isset($_GET['gsd_location']) ? sanitize_text_field($_GET['gsd_location']) : '';
         if (empty($location_search)) {
-            return $join;
-        }
-
-        // Check if this is a gun shop search
-        if (!$this->is_gun_shop_query($query)) {
             return $join;
         }
 
@@ -551,17 +546,12 @@ class GSD_Post_Types {
         global $wpdb;
 
         // Only for main query on frontend with gsd_location parameter
-        if (is_admin() || !$query->is_main_query()) {
+        if (is_admin()) {
             return $where;
         }
 
         $location_search = isset($_GET['gsd_location']) ? sanitize_text_field($_GET['gsd_location']) : '';
         if (empty($location_search)) {
-            return $where;
-        }
-
-        // Check if this is a gun shop search
-        if (!$this->is_gun_shop_query($query)) {
             return $where;
         }
 
@@ -587,17 +577,12 @@ class GSD_Post_Types {
         global $wpdb;
 
         // Only for main query on frontend with gsd_location parameter
-        if (is_admin() || !$query->is_main_query()) {
+        if (is_admin()) {
             return $groupby;
         }
 
         $location_search = isset($_GET['gsd_location']) ? sanitize_text_field($_GET['gsd_location']) : '';
         if (empty($location_search)) {
-            return $groupby;
-        }
-
-        // Check if this is a gun shop search
-        if (!$this->is_gun_shop_query($query)) {
             return $groupby;
         }
 
