@@ -529,7 +529,7 @@ class GSD_Post_Types {
     }
 
     /**
-     * Prevent 404 on search results page even when no results found.
+     * Prevent 404 on search results page and force archive template.
      */
     public function prevent_search_404() {
         global $wp_query;
@@ -544,24 +544,26 @@ class GSD_Post_Types {
 
         // If we have search parameters and current URL contains gun-shops
         if ($has_search_params && strpos($_SERVER['REQUEST_URI'], 'gun-shops') !== false) {
-            // Only fix 404s, don't interfere with valid results
+            // Fix 404 status
             if (is_404()) {
                 status_header(200);
                 $wp_query->is_404 = false;
-                $wp_query->is_archive = true;
-                $wp_query->is_post_type_archive = true;
-                $wp_query->post_type = 'gsd_listing';
-
-                // Load the archive template
-                add_filter('template_include', function($template) {
-                    $archive_template = locate_template('archive-gsd_listing.php');
-                    if ($archive_template) {
-                        return $archive_template;
-                    }
-                    // Use plugin template
-                    return plugin_dir_path(dirname(__FILE__)) . 'public/templates/archive-gsd_listing.php';
-                });
             }
+
+            // Always ensure it's treated as archive
+            $wp_query->is_archive = true;
+            $wp_query->is_post_type_archive = true;
+            $wp_query->post_type = 'gsd_listing';
+
+            // Always load the archive template for gun shop searches
+            add_filter('template_include', function($template) {
+                $archive_template = locate_template('archive-gsd_listing.php');
+                if ($archive_template) {
+                    return $archive_template;
+                }
+                // Use plugin template
+                return plugin_dir_path(dirname(__FILE__)) . 'public/templates/archive-gsd_listing.php';
+            });
         }
     }
 }
