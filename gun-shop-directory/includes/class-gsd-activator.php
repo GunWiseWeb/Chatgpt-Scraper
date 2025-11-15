@@ -66,6 +66,23 @@ class GSD_Activator {
         add_option('gsd_directory_show_search', '1');
         add_option('gsd_directory_show_submit', '1');
 
+        // Delete old Gun Shop Directory page if it exists
+        $old_page = get_page_by_path('gun-shop-directory');
+        if ($old_page) {
+            wp_trash_post($old_page->ID);
+        }
+
+        // Also check by title
+        $old_pages = get_posts(array(
+            'post_type' => 'page',
+            'title' => 'Gun Shop Directory',
+            'post_status' => array('publish', 'draft'),
+            'numberposts' => 1
+        ));
+        if (!empty($old_pages)) {
+            wp_trash_post($old_pages[0]->ID);
+        }
+
         // Flush rewrite rules
         flush_rewrite_rules();
     }
