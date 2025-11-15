@@ -219,6 +219,17 @@ https://github.com/GunWiseWeb/gun-shop-directory/issues
 
 ## Changelog
 
+### Version 1.1.0
+- **Premium styling** with gradients, animations, and modern design
+- **Frontend listing submission** - users can submit listings from the frontend
+- **Pending approval system** - all user submissions require admin approval
+- New `[gsd_submit_listing]` shortcode for submission forms
+- Enhanced CSS with interactive hover effects and transitions
+- Improved button designs with gradient backgrounds
+- Better form styling with modern inputs
+- New admin setting to enable/disable user submissions
+- Updated color scheme with professional blues and purples
+
 ### Version 1.0.0
 - Initial release
 - Custom post type for gun shop listings
