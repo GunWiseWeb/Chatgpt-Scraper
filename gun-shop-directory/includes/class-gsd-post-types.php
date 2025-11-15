@@ -19,6 +19,7 @@ class GSD_Post_Types {
         add_action('save_post_gsd_listing', array($this, 'save_listing_meta'));
         add_action('pre_get_posts', array($this, 'modify_search_query'));
         add_filter('query_vars', array($this, 'add_query_vars'));
+        add_action('template_redirect', array($this, 'prevent_search_404'));
     }
 
     /**
@@ -476,6 +477,31 @@ class GSD_Post_Types {
                 'terms' => $category
             );
             $query->set('tax_query', $tax_query);
+        }
+    }
+
+    /**
+     * Prevent 404 on search results page even when no results found.
+     */
+    public function prevent_search_404() {
+        global $wp_query;
+
+        // Only handle gun shop archive searches
+        if (!is_post_type_archive('gsd_listing') && !is_tax('gsd_category') && !is_tax('gsd_location')) {
+            return;
+        }
+
+        // If we have search parameters but got a 404, force it to not be a 404
+        if (is_404() && (
+            !empty($_GET['gsd_search']) ||
+            !empty($_GET['gsd_location']) ||
+            !empty($_GET['gsd_type']) ||
+            !empty($_GET['gsd_category'])
+        )) {
+            status_header(200);
+            $wp_query->is_404 = false;
+            $wp_query->is_archive = true;
+            $wp_query->is_post_type_archive = true;
         }
     }
 }

@@ -100,6 +100,17 @@
         }
 
         /**
+         * Layout selector
+         */
+        $('#gsd-layout').on('change', function() {
+            var layout = $(this).val();
+            // Set cookie for 30 days
+            document.cookie = 'gsd_layout=' + layout + '; path=/; max-age=' + (30 * 24 * 60 * 60);
+            // Reload page to apply layout
+            window.location.reload();
+        });
+
+        /**
          * Sort functionality
          */
         $('#gsd-sort').on('change', function() {

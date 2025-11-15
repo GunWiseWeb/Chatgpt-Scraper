@@ -440,7 +440,7 @@ class GSD_Public {
     /**
      * Render listing based on layout type.
      */
-    private function render_listing_by_layout($listing_id, $layout) {
+    public function render_listing_by_layout($listing_id, $layout) {
         switch ($layout) {
             case 'list-simple':
                 $this->render_listing_list_simple($listing_id);

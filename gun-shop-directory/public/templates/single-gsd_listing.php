@@ -31,6 +31,40 @@ while (have_posts()) : the_post();
     $review_count = GSD_Reviews::get_review_count($listing_id);
     $rating_distribution = GSD_Reviews::get_rating_distribution($listing_id);
     $reviews = GSD_Reviews::get_reviews($listing_id, 'approved');
+
+    // Helper function to convert 24-hour time to 12-hour format
+    function gsd_convert_time_to_12hour($time) {
+        if (empty($time)) return '';
+
+        // Check if already in 12-hour format
+        if (stripos($time, 'am') !== false || stripos($time, 'pm') !== false) {
+            return $time;
+        }
+
+        // Try to parse 24-hour format (e.g., "14:00" or "1400")
+        $time = str_replace(':', '', $time);
+        if (strlen($time) == 3) {
+            $time = '0' . $time; // Convert "900" to "0900"
+        }
+
+        if (strlen($time) == 4) {
+            $hour = substr($time, 0, 2);
+            $minute = substr($time, 2, 2);
+
+            $hour = intval($hour);
+            $suffix = ($hour >= 12) ? 'PM' : 'AM';
+
+            if ($hour == 0) {
+                $hour = 12;
+            } elseif ($hour > 12) {
+                $hour = $hour - 12;
+            }
+
+            return sprintf('%d:%s %s', $hour, $minute, $suffix);
+        }
+
+        return $time; // Return as-is if we can't parse it
+    }
 ?>
 
 <div class="gsd-single-listing">
@@ -140,7 +174,7 @@ while (have_posts()) : the_post();
                                     if ($closed == '1') {
                                         _e('Closed', 'gun-shop-directory');
                                     } elseif (!empty($open) && !empty($close)) {
-                                        echo esc_html($open . ' - ' . $close);
+                                        echo esc_html(gsd_convert_time_to_12hour($open) . ' - ' . gsd_convert_time_to_12hour($close));
                                     } else {
                                         echo '—';
                                     }

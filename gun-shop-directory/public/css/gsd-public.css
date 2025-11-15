@@ -277,6 +277,13 @@
     color: var(--gsd-dark);
 }
 
+.gsd-results-controls {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
 .gsd-results-sorting {
     display: flex;
     align-items: center;
@@ -287,6 +294,18 @@
     padding: 8px 12px;
     border: 1px solid var(--gsd-border);
     border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.gsd-results-sorting select:hover {
+    border-color: var(--gsd-primary-light);
+}
+
+.gsd-results-sorting select:focus {
+    outline: none;
+    border-color: var(--gsd-primary-light);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
 /* ===========================
@@ -1711,6 +1730,19 @@ body.gsd-modal-open {
     width: 16px;
     height: 16px;
     color: var(--gsd-primary-light);
+    font-family: dashicons;
+    speak: none;
+    font-style: normal;
+    font-weight: normal;
+    font-variant: normal;
+    text-transform: none;
+    line-height: 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.gsd-tooltip .dashicons::before {
+    content: "\f348"; /* dashicons-info icon code */
 }
 
 .gsd-tooltip-text {
