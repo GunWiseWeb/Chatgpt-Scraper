@@ -37,6 +37,23 @@ get_header();
         <?php echo do_shortcode('[gsd_search]'); ?>
     </div>
 
+    <?php
+    if (isset($_GET['debug'])) {
+        global $wp_query;
+        echo "<!-- DEBUG ARCHIVE TEMPLATE:\n";
+        echo "have_posts: " . (have_posts() ? 'YES' : 'NO') . "\n";
+        echo "found_posts: " . $wp_query->found_posts . "\n";
+        echo "post_count: " . $wp_query->post_count . "\n";
+        echo "is_404: " . (is_404() ? 'YES' : 'NO') . "\n";
+        echo "is_archive: " . (is_archive() ? 'YES' : 'NO') . "\n";
+        echo "post_type: " . (isset($wp_query->query_vars['post_type']) ? $wp_query->query_vars['post_type'] : 'NOT SET') . "\n";
+        if (isset($wp_query->query_vars['post__in'])) {
+            echo "post__in: " . print_r($wp_query->query_vars['post__in'], true) . "\n";
+        }
+        echo "-->";
+    }
+    ?>
+
     <?php if (have_posts()) : ?>
         <div class="gsd-results-bar">
             <span class="gsd-results-count">
