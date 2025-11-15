@@ -447,6 +447,28 @@ class GSD_Post_Types {
         $location_search = isset($_GET['gsd_location']) ? sanitize_text_field($_GET['gsd_location']) : '';
         if (!empty($location_search)) {
             global $wpdb;
+
+            // Debug: Check what's in the database
+            $debug_query = $wpdb->prepare(
+                "SELECT pm.post_id, pm.meta_key, pm.meta_value
+                FROM {$wpdb->postmeta} pm
+                INNER JOIN {$wpdb->posts} p ON pm.post_id = p.ID
+                WHERE p.post_type = 'gsd_listing'
+                AND p.post_status = 'publish'
+                AND pm.meta_key IN ('_gsd_city', '_gsd_state', '_gsd_zip')
+                ORDER BY pm.post_id"
+            );
+            $all_meta = $wpdb->get_results($debug_query);
+
+            // Add to page as HTML comment for debugging
+            if (isset($_GET['debug'])) {
+                echo "<!-- DEBUG: All location meta:\n";
+                foreach ($all_meta as $meta) {
+                    echo "Post ID: {$meta->post_id}, Key: {$meta->meta_key}, Value: {$meta->meta_value}\n";
+                }
+                echo "Searching for: {$location_search}\n-->";
+            }
+
             $post_ids = $wpdb->get_col($wpdb->prepare(
                 "SELECT DISTINCT p.ID
                 FROM {$wpdb->posts} p
@@ -462,6 +484,10 @@ class GSD_Post_Types {
                 '%' . $wpdb->esc_like($location_search) . '%',
                 '%' . $wpdb->esc_like($location_search) . '%'
             ));
+
+            if (isset($_GET['debug'])) {
+                echo "<!-- DEBUG: Found post IDs: " . print_r($post_ids, true) . " -->";
+            }
 
             if (!empty($post_ids)) {
                 $query->set('post__in', $post_ids);
