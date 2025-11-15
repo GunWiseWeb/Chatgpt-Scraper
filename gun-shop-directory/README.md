@@ -261,6 +261,15 @@ https://github.com/GunWiseWeb/gun-shop-directory/issues
 
 ## Changelog
 
+### Version 1.2.0
+- **Auto-created directory page** - plugin automatically creates "Gun Shop Directory" page on activation
+- **Directory display settings** - admin panel settings to control layout, search, and submit button
+- **Review update system** - users can now update their existing reviews
+- **"Already reviewed" notice** - shows message when user has already reviewed a business
+- **Pre-populated update form** - existing review data auto-fills when updating
+- Admin settings link to edit the auto-created directory page
+- Updated review approval workflow for updated reviews
+
 ### Version 1.1.0
 - **Unified directory shortcode** `[gsd_directory]` - combines search, listings, and submission in one
 - **5 layout options** - grid-large, grid-compact, grid-minimal, list-simple, list-detailed
