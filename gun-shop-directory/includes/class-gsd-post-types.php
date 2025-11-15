@@ -26,7 +26,7 @@ class GSD_Post_Types {
             ),
             'public' => true,
             'has_archive' => 'gun-shops',
-            'rewrite' => array('slug' => 'gun-shop'),
+            'rewrite' => array('slug' => 'gun-shops', 'with_front' => false),
             'supports' => array('title', 'editor', 'thumbnail'),
             'menu_icon' => 'dashicons-store',
             'show_in_rest' => true,
