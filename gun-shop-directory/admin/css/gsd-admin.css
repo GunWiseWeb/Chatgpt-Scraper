@@ -1,0 +1,89 @@
+/**
+ * Gun Shop Directory - Admin Styles
+ */
+
+/* ===========================
+   Meta Box Styling
+   =========================== */
+.gsd-rating-stats {
+    font-size: 14px;
+}
+
+.gsd-rating-stats p {
+    margin: 8px 0;
+    display: flex;
+    justify-content: space-between;
+}
+
+.gsd-rating-stats hr {
+    margin: 15px 0;
+    border: none;
+    border-top: 1px solid #ddd;
+}
+
+/* ===========================
+   Review Management Table
+   =========================== */
+.gsd-approve-review,
+.gsd-delete-review {
+    margin-right: 5px;
+}
+
+.gsd-admin-message {
+    padding: 10px 15px;
+    margin: 15px 0;
+    border-left: 4px solid;
+    background: #fff;
+}
+
+.gsd-admin-message.success {
+    border-color: #46b450;
+    background: #ecf7ed;
+}
+
+.gsd-admin-message.error {
+    border-color: #dc3232;
+    background: #fbeaea;
+}
+
+/* ===========================
+   Settings Page
+   =========================== */
+.gsd-settings-section {
+    background: white;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.gsd-settings-section h2 {
+    margin-top: 0;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #ddd;
+}
+
+/* ===========================
+   Star Rating Display
+   =========================== */
+.gsd-star-rating {
+    display: inline-flex;
+    gap: 2px;
+    font-size: 16px;
+}
+
+.gsd-star {
+    color: #ffb900;
+}
+
+.gsd-star-full {
+    color: #ffb900;
+}
+
+.gsd-star-half {
+    color: #ffb900;
+    opacity: 0.5;
+}
+
+.gsd-star-empty {
+    color: #ddd;
+}

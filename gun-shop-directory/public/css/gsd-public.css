@@ -1,0 +1,835 @@
+/**
+ * Gun Shop Directory - Public Styles
+ */
+
+/* ===========================
+   Variables & Reset
+   =========================== */
+:root {
+    --gsd-primary: #2c3e50;
+    --gsd-secondary: #3498db;
+    --gsd-accent: #e74c3c;
+    --gsd-success: #27ae60;
+    --gsd-warning: #f39c12;
+    --gsd-light: #ecf0f1;
+    --gsd-dark: #2c3e50;
+    --gsd-border: #ddd;
+    --gsd-shadow: rgba(0, 0, 0, 0.1);
+    --gsd-star-color: #f39c12;
+    --gsd-star-empty: #ddd;
+}
+
+/* ===========================
+   Archive/Grid Layout
+   =========================== */
+.gsd-archive-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 20px;
+}
+
+.gsd-archive-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.gsd-archive-title {
+    font-size: 2.5em;
+    color: var(--gsd-dark);
+    margin-bottom: 15px;
+    font-weight: 700;
+}
+
+.gsd-archive-description {
+    font-size: 1.1em;
+    color: #666;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+/* ===========================
+   Search Form
+   =========================== */
+.gsd-search-wrapper {
+    margin-bottom: 40px;
+}
+
+.gsd-search-form {
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px var(--gsd-shadow);
+}
+
+.gsd-search-fields {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    align-items: end;
+}
+
+.gsd-search-field input,
+.gsd-search-field select {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid var(--gsd-border);
+    border-radius: 5px;
+    font-size: 1em;
+    transition: border-color 0.3s;
+}
+
+.gsd-search-field input:focus,
+.gsd-search-field select:focus {
+    outline: none;
+    border-color: var(--gsd-secondary);
+}
+
+.gsd-search-submit {
+    width: 100%;
+    padding: 12px 30px;
+    background: var(--gsd-secondary);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 1em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.gsd-search-submit:hover {
+    background: #2980b9;
+}
+
+/* ===========================
+   Results Bar
+   =========================== */
+.gsd-results-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid var(--gsd-border);
+}
+
+.gsd-results-count {
+    font-size: 1.1em;
+    font-weight: 600;
+    color: var(--gsd-dark);
+}
+
+.gsd-results-sorting {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.gsd-results-sorting select {
+    padding: 8px 12px;
+    border: 1px solid var(--gsd-border);
+    border-radius: 5px;
+}
+
+/* ===========================
+   Listings Grid
+   =========================== */
+.gsd-listings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 30px;
+    margin-bottom: 40px;
+}
+
+.gsd-listing-card {
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px var(--gsd-shadow);
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.gsd-listing-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+}
+
+.gsd-listing-image {
+    width: 100%;
+    height: 200px;
+    overflow: hidden;
+}
+
+.gsd-listing-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s;
+}
+
+.gsd-listing-card:hover .gsd-listing-image img {
+    transform: scale(1.05);
+}
+
+.gsd-listing-content {
+    padding: 20px;
+}
+
+.gsd-listing-title {
+    font-size: 1.4em;
+    margin: 0 0 10px 0;
+    font-weight: 700;
+}
+
+.gsd-listing-title a {
+    color: var(--gsd-dark);
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+.gsd-listing-title a:hover {
+    color: var(--gsd-secondary);
+}
+
+.gsd-listing-rating {
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.gsd-review-count {
+    color: #666;
+    font-size: 0.9em;
+}
+
+.gsd-listing-type {
+    margin-bottom: 10px;
+}
+
+.gsd-badge {
+    display: inline-block;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.85em;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.gsd-badge-brick_mortar {
+    background: #e8f5e9;
+    color: #2e7d32;
+}
+
+.gsd-badge-ecommerce {
+    background: #e3f2fd;
+    color: #1565c0;
+}
+
+.gsd-badge-both {
+    background: #fff3e0;
+    color: #e65100;
+}
+
+.gsd-listing-location,
+.gsd-listing-phone {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 8px;
+    color: #666;
+    font-size: 0.95em;
+}
+
+.gsd-listing-location .dashicons,
+.gsd-listing-phone .dashicons {
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
+}
+
+.gsd-listing-excerpt {
+    margin: 15px 0;
+    color: #666;
+    line-height: 1.6;
+}
+
+/* ===========================
+   Buttons
+   =========================== */
+.gsd-button {
+    display: inline-block;
+    padding: 10px 25px;
+    border-radius: 5px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s;
+    border: none;
+    cursor: pointer;
+    font-size: 1em;
+}
+
+.gsd-button-primary {
+    background: var(--gsd-secondary);
+    color: white;
+}
+
+.gsd-button-primary:hover {
+    background: #2980b9;
+    color: white;
+}
+
+/* ===========================
+   Star Rating
+   =========================== */
+.gsd-star-rating {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.gsd-star {
+    color: var(--gsd-star-color);
+    font-size: 1.2em;
+}
+
+.gsd-star-full {
+    color: var(--gsd-star-color);
+}
+
+.gsd-star-half {
+    color: var(--gsd-star-color);
+    opacity: 0.5;
+}
+
+.gsd-star-empty {
+    color: var(--gsd-star-empty);
+}
+
+.gsd-rating-number {
+    margin-left: 5px;
+    font-weight: 600;
+    color: var(--gsd-dark);
+}
+
+/* ===========================
+   Single Listing
+   =========================== */
+.gsd-single-listing {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 20px;
+}
+
+.gsd-listing-header {
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px var(--gsd-shadow);
+    margin-bottom: 30px;
+}
+
+.gsd-listing-header-content {
+    margin-bottom: 20px;
+}
+
+.gsd-listing-featured-image {
+    width: 100%;
+    max-height: 400px;
+    overflow: hidden;
+    border-radius: 10px;
+}
+
+.gsd-listing-featured-image img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.gsd-listing-rating-summary {
+    margin: 15px 0;
+}
+
+.gsd-listing-main {
+    display: grid;
+    grid-template-columns: 1fr 350px;
+    gap: 30px;
+}
+
+@media (max-width: 968px) {
+    .gsd-listing-main {
+        grid-template-columns: 1fr;
+    }
+}
+
+.gsd-listing-content {
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px var(--gsd-shadow);
+}
+
+.gsd-listing-section {
+    margin-bottom: 40px;
+}
+
+.gsd-listing-section h2,
+.gsd-listing-section h3 {
+    color: var(--gsd-dark);
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--gsd-border);
+}
+
+.gsd-listing-description {
+    line-height: 1.8;
+    color: #333;
+}
+
+.gsd-listing-categories {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.gsd-category-tag {
+    display: inline-block;
+    padding: 8px 15px;
+    background: var(--gsd-light);
+    color: var(--gsd-dark);
+    border-radius: 20px;
+    text-decoration: none;
+    font-size: 0.9em;
+    transition: background 0.3s;
+}
+
+.gsd-category-tag:hover {
+    background: var(--gsd-secondary);
+    color: white;
+}
+
+/* ===========================
+   Business Hours
+   =========================== */
+.gsd-hours-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.gsd-hours-table tr {
+    border-bottom: 1px solid var(--gsd-border);
+}
+
+.gsd-hours-table td {
+    padding: 12px 0;
+}
+
+.gsd-hours-day {
+    font-weight: 600;
+    color: var(--gsd-dark);
+    width: 40%;
+}
+
+.gsd-hours-time {
+    color: #666;
+}
+
+/* ===========================
+   Sidebar
+   =========================== */
+.gsd-listing-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.gsd-sidebar-box {
+    background: white;
+    padding: 25px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px var(--gsd-shadow);
+}
+
+.gsd-sidebar-box h3 {
+    color: var(--gsd-dark);
+    margin: 0 0 20px 0;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--gsd-border);
+    font-size: 1.2em;
+}
+
+.gsd-contact-item {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    align-items: flex-start;
+}
+
+.gsd-contact-item .dashicons {
+    width: 20px;
+    height: 20px;
+    font-size: 20px;
+    color: var(--gsd-secondary);
+    flex-shrink: 0;
+}
+
+.gsd-contact-item a {
+    color: var(--gsd-dark);
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+.gsd-contact-item a:hover {
+    color: var(--gsd-secondary);
+}
+
+.gsd-social-links {
+    display: flex;
+    gap: 10px;
+}
+
+.gsd-social-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 45px;
+    height: 45px;
+    background: var(--gsd-light);
+    border-radius: 50%;
+    transition: all 0.3s;
+}
+
+.gsd-social-link:hover {
+    background: var(--gsd-secondary);
+}
+
+.gsd-social-link .dashicons {
+    color: var(--gsd-dark);
+    transition: color 0.3s;
+}
+
+.gsd-social-link:hover .dashicons {
+    color: white;
+}
+
+.gsd-map {
+    width: 100%;
+    height: 300px;
+    background: var(--gsd-light);
+    border-radius: 5px;
+}
+
+/* ===========================
+   Reviews Section
+   =========================== */
+.gsd-reviews-section {
+    margin-top: 40px;
+    padding-top: 40px;
+    border-top: 3px solid var(--gsd-border);
+}
+
+.gsd-rating-summary {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 40px;
+    margin-bottom: 40px;
+    padding: 30px;
+    background: var(--gsd-light);
+    border-radius: 10px;
+}
+
+@media (max-width: 768px) {
+    .gsd-rating-summary {
+        grid-template-columns: 1fr;
+        text-align: center;
+    }
+}
+
+.gsd-rating-summary-score {
+    text-align: center;
+}
+
+.gsd-rating-number {
+    font-size: 3em;
+    font-weight: 700;
+    color: var(--gsd-dark);
+    margin-bottom: 10px;
+}
+
+.gsd-rating-count {
+    margin-top: 10px;
+    color: #666;
+    font-size: 0.95em;
+}
+
+.gsd-rating-distribution {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.gsd-rating-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.gsd-rating-label {
+    min-width: 40px;
+    font-size: 0.9em;
+    font-weight: 600;
+}
+
+.gsd-rating-bar-bg {
+    flex: 1;
+    height: 8px;
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.gsd-rating-bar-fill {
+    height: 100%;
+    background: var(--gsd-star-color);
+    transition: width 0.3s;
+}
+
+/* ===========================
+   Review List
+   =========================== */
+.gsd-reviews-list {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+.gsd-review-item {
+    padding: 25px;
+    background: #fafafa;
+    border-radius: 10px;
+    border-left: 4px solid var(--gsd-secondary);
+}
+
+.gsd-review-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 15px;
+}
+
+.gsd-review-author {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+.gsd-review-author img {
+    border-radius: 50%;
+}
+
+.gsd-review-author-info strong {
+    display: block;
+    color: var(--gsd-dark);
+    margin-bottom: 3px;
+}
+
+.gsd-review-date {
+    font-size: 0.85em;
+    color: #999;
+}
+
+.gsd-review-title {
+    font-size: 1.1em;
+    color: var(--gsd-dark);
+    margin: 0 0 10px 0;
+    font-weight: 600;
+}
+
+.gsd-review-content {
+    line-height: 1.7;
+    color: #333;
+}
+
+/* ===========================
+   Review Form
+   =========================== */
+.gsd-review-form-wrapper {
+    margin-top: 40px;
+    padding: 30px;
+    background: #f9f9f9;
+    border-radius: 10px;
+}
+
+.gsd-review-form-wrapper h3 {
+    margin: 0 0 25px 0;
+    color: var(--gsd-dark);
+}
+
+.gsd-review-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.gsd-form-field label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--gsd-dark);
+}
+
+.gsd-input,
+.gsd-textarea {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid var(--gsd-border);
+    border-radius: 5px;
+    font-size: 1em;
+    font-family: inherit;
+    transition: border-color 0.3s;
+}
+
+.gsd-input:focus,
+.gsd-textarea:focus {
+    outline: none;
+    border-color: var(--gsd-secondary);
+}
+
+.gsd-textarea {
+    resize: vertical;
+    min-height: 120px;
+}
+
+/* Star Input for Rating */
+.gsd-star-input {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: flex-end;
+    gap: 5px;
+}
+
+.gsd-star-input input {
+    display: none;
+}
+
+.gsd-star-input label {
+    cursor: pointer;
+    font-size: 2em;
+    color: var(--gsd-star-empty);
+    transition: color 0.2s;
+    margin: 0;
+}
+
+.gsd-star-input input:checked ~ label,
+.gsd-star-input label:hover,
+.gsd-star-input label:hover ~ label {
+    color: var(--gsd-star-color);
+}
+
+.gsd-form-message {
+    padding: 15px;
+    border-radius: 5px;
+    display: none;
+}
+
+.gsd-form-message.success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+    display: block;
+}
+
+.gsd-form-message.error {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+    display: block;
+}
+
+/* ===========================
+   Pagination
+   =========================== */
+.pagination {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 40px;
+}
+
+.pagination .page-numbers {
+    padding: 10px 15px;
+    background: white;
+    border: 1px solid var(--gsd-border);
+    border-radius: 5px;
+    text-decoration: none;
+    color: var(--gsd-dark);
+    transition: all 0.3s;
+}
+
+.pagination .page-numbers:hover,
+.pagination .page-numbers.current {
+    background: var(--gsd-secondary);
+    color: white;
+    border-color: var(--gsd-secondary);
+}
+
+/* ===========================
+   No Results
+   =========================== */
+.gsd-no-results {
+    text-align: center;
+    padding: 60px 20px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px var(--gsd-shadow);
+}
+
+.gsd-no-results h2 {
+    color: var(--gsd-dark);
+    margin-bottom: 15px;
+}
+
+.gsd-no-results p {
+    color: #666;
+    font-size: 1.1em;
+}
+
+/* ===========================
+   Loading States
+   =========================== */
+.gsd-loading {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ===========================
+   Responsive
+   =========================== */
+@media (max-width: 768px) {
+    .gsd-archive-title {
+        font-size: 2em;
+    }
+
+    .gsd-listings-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .gsd-search-fields {
+        grid-template-columns: 1fr;
+    }
+
+    .gsd-results-bar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+}
