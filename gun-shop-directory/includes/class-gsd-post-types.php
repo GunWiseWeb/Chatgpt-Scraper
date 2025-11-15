@@ -14,8 +14,11 @@ class GSD_Post_Types {
     public function __construct() {
         add_action('init', array($this, 'register_post_types'));
         add_action('init', array($this, 'register_taxonomies'));
+        add_action('init', array($this, 'register_query_vars'));
         add_action('add_meta_boxes', array($this, 'add_meta_boxes'));
         add_action('save_post_gsd_listing', array($this, 'save_listing_meta'));
+        add_action('pre_get_posts', array($this, 'modify_search_query'));
+        add_filter('query_vars', array($this, 'add_query_vars'));
     }
 
     /**
@@ -67,6 +70,24 @@ class GSD_Post_Types {
         );
 
         register_post_type('gsd_listing', $args);
+    }
+
+    /**
+     * Register query vars.
+     */
+    public function register_query_vars() {
+        // Query vars are registered through add_query_vars filter
+    }
+
+    /**
+     * Add custom query vars.
+     */
+    public function add_query_vars($vars) {
+        $vars[] = 'gsd_search';
+        $vars[] = 'gsd_location';
+        $vars[] = 'gsd_type';
+        $vars[] = 'gsd_category';
+        return $vars;
     }
 
     /**
@@ -384,6 +405,77 @@ class GSD_Post_Types {
             update_post_meta($post_id, "_gsd_hours_{$day}_open", sanitize_text_field($_POST["gsd_hours_{$day}_open"] ?? ''));
             update_post_meta($post_id, "_gsd_hours_{$day}_close", sanitize_text_field($_POST["gsd_hours_{$day}_close"] ?? ''));
             update_post_meta($post_id, "_gsd_hours_{$day}_closed", isset($_POST["gsd_hours_{$day}_closed"]) ? '1' : '0');
+        }
+    }
+
+    /**
+     * Modify search query to include location search by zip, city, and state.
+     */
+    public function modify_search_query($query) {
+        // Only modify the main query on the frontend for gsd_listing post type
+        if (is_admin() || !$query->is_main_query()) {
+            return;
+        }
+
+        // Only for gun shop archives
+        if (!is_post_type_archive('gsd_listing') && !is_tax('gsd_category') && !is_tax('gsd_location')) {
+            return;
+        }
+
+        // Handle location search parameter
+        $location_search = get_query_var('gsd_location');
+        if (!empty($location_search)) {
+            $meta_query = $query->get('meta_query') ?: array();
+
+            // Search in city, state, or zip
+            $meta_query['relation'] = 'OR';
+            $meta_query[] = array(
+                'key' => '_gsd_city',
+                'value' => $location_search,
+                'compare' => 'LIKE'
+            );
+            $meta_query[] = array(
+                'key' => '_gsd_state',
+                'value' => $location_search,
+                'compare' => 'LIKE'
+            );
+            $meta_query[] = array(
+                'key' => '_gsd_zip',
+                'value' => $location_search,
+                'compare' => 'LIKE'
+            );
+
+            $query->set('meta_query', $meta_query);
+        }
+
+        // Handle general search parameter
+        $general_search = get_query_var('gsd_search');
+        if (!empty($general_search)) {
+            $query->set('s', $general_search);
+        }
+
+        // Handle business type filter
+        $business_type = get_query_var('gsd_type');
+        if (!empty($business_type)) {
+            $meta_query = $query->get('meta_query') ?: array();
+            $meta_query[] = array(
+                'key' => '_gsd_business_type',
+                'value' => $business_type,
+                'compare' => '='
+            );
+            $query->set('meta_query', $meta_query);
+        }
+
+        // Handle category filter
+        $category = get_query_var('gsd_category');
+        if (!empty($category)) {
+            $tax_query = $query->get('tax_query') ?: array();
+            $tax_query[] = array(
+                'taxonomy' => 'gsd_category',
+                'field' => 'slug',
+                'terms' => $category
+            );
+            $query->set('tax_query', $tax_query);
         }
     }
 }

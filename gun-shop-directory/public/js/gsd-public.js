@@ -181,10 +181,12 @@
         /**
          * Toggle submit listing form in directory view
          */
-        $('.gsd-submit-trigger').on('click', function(e) {
+        $(document).on('click', '.gsd-submit-trigger', function(e) {
             e.preventDefault();
+            console.log('Add listing button clicked');
 
             var $submitSection = $('#gsd-submit-form');
+            console.log('Submit section found:', $submitSection.length);
 
             if ($submitSection.length) {
                 $submitSection.slideToggle(300, function() {
@@ -195,26 +197,34 @@
                         }, 300);
                     }
                 });
+            } else {
+                console.error('Submit form section not found!');
             }
         });
 
         /**
          * Claim Business Modal
          */
-        $('.gsd-claim-trigger').on('click', function(e) {
+        $(document).on('click', '.gsd-claim-trigger', function(e) {
             e.preventDefault();
+            console.log('Claim button clicked');
+
             var listingId = $(this).data('listing-id');
+            console.log('Listing ID:', listingId);
+
             $('#gsd-claim-listing-id').val(listingId);
             $('#gsd-claim-modal').fadeIn(300);
             $('body').addClass('gsd-modal-open');
         });
 
-        $('.gsd-modal-close').on('click', function() {
+        $(document).on('click', '.gsd-modal-close', function(e) {
+            e.preventDefault();
             $('#gsd-claim-modal').fadeOut(300);
             $('body').removeClass('gsd-modal-open');
         });
 
-        $('.gsd-modal-overlay').on('click', function() {
+        $(document).on('click', '.gsd-modal-overlay', function(e) {
+            e.preventDefault();
             $('#gsd-claim-modal').fadeOut(300);
             $('body').removeClass('gsd-modal-open');
         });

@@ -34,10 +34,13 @@ class GSD_Public {
      * Register the stylesheets for the public-facing side.
      */
     public function enqueue_styles() {
+        // Enqueue dashicons
+        wp_enqueue_style('dashicons');
+
         wp_enqueue_style(
             $this->plugin_name,
             GSD_PLUGIN_URL . 'public/css/gsd-public.css',
-            array(),
+            array('dashicons'),
             $this->version,
             'all'
         );
