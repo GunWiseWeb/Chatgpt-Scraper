@@ -3,7 +3,7 @@
  * Plugin Name: Gun Shop Directory
  * Plugin URI: https://github.com/GunWiseWeb/gun-shop-directory
  * Description: A professional business directory plugin for gun shops with ratings and reviews, similar to Yelp.
- * Version: 1.2.7
+ * Version: 1.2.8
  * Author: GunWise
  * Author URI: https://gunwise.com
  * License: GPL-2.0+
@@ -20,7 +20,7 @@ if (!defined('WPINC')) {
 /**
  * Current plugin version.
  */
-define('GSD_VERSION', '1.2.7');
+define('GSD_VERSION', '1.2.8');
 define('GSD_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('GSD_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('GSD_PLUGIN_BASENAME', plugin_basename(__FILE__));
