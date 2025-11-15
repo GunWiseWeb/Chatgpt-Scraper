@@ -184,25 +184,33 @@ class GSD_Public {
         ), $atts);
 
         ob_start();
+
+        // Get the correct form action URL
+        $form_action = '';
+        if (is_post_type_archive('gsd_listing') || is_tax('gsd_category') || is_tax('gsd_location')) {
+            $form_action = esc_url(remove_query_arg(array('gsd_search', 'gsd_location', 'gsd_type', 'gsd_category')));
+        } else {
+            $form_action = get_post_type_archive_link('gsd_listing');
+        }
         ?>
         <div class="gsd-search-wrapper">
-            <form method="get" action="<?php echo get_post_type_archive_link('gsd_listing'); ?>" class="gsd-search-form">
+            <form method="get" action="<?php echo $form_action; ?>" class="gsd-search-form">
                 <div class="gsd-search-main">
                     <div class="gsd-search-inputs">
                         <div class="gsd-search-field gsd-search-field-wide">
-                            <input type="text" name="gsd_search" placeholder="<?php _e('Search gun shops...', 'gun-shop-directory'); ?>" value="<?php echo esc_attr(get_query_var('gsd_search')); ?>">
+                            <input type="text" name="gsd_search" placeholder="<?php _e('Search gun shops...', 'gun-shop-directory'); ?>" value="<?php echo esc_attr(isset($_GET['gsd_search']) ? $_GET['gsd_search'] : ''); ?>">
                         </div>
 
                         <div class="gsd-search-field">
-                            <input type="text" name="gsd_location" placeholder="<?php _e('Location', 'gun-shop-directory'); ?>" value="<?php echo esc_attr(get_query_var('gsd_location')); ?>">
+                            <input type="text" name="gsd_location" placeholder="<?php _e('City, State, or ZIP', 'gun-shop-directory'); ?>" value="<?php echo esc_attr(isset($_GET['gsd_location']) ? $_GET['gsd_location'] : ''); ?>">
                         </div>
 
                         <div class="gsd-search-field">
                             <select name="gsd_type">
                                 <option value=""><?php _e('All Types', 'gun-shop-directory'); ?></option>
-                                <option value="brick_mortar" <?php selected(get_query_var('gsd_type'), 'brick_mortar'); ?>><?php _e('Brick & Mortar', 'gun-shop-directory'); ?></option>
-                                <option value="ecommerce" <?php selected(get_query_var('gsd_type'), 'ecommerce'); ?>><?php _e('Online Store', 'gun-shop-directory'); ?></option>
-                                <option value="both" <?php selected(get_query_var('gsd_type'), 'both'); ?>><?php _e('Both', 'gun-shop-directory'); ?></option>
+                                <option value="brick_mortar" <?php selected(isset($_GET['gsd_type']) ? $_GET['gsd_type'] : '', 'brick_mortar'); ?>><?php _e('Brick & Mortar', 'gun-shop-directory'); ?></option>
+                                <option value="ecommerce" <?php selected(isset($_GET['gsd_type']) ? $_GET['gsd_type'] : '', 'ecommerce'); ?>><?php _e('Online Store', 'gun-shop-directory'); ?></option>
+                                <option value="both" <?php selected(isset($_GET['gsd_type']) ? $_GET['gsd_type'] : '', 'both'); ?>><?php _e('Both', 'gun-shop-directory'); ?></option>
                             </select>
                         </div>
                     </div>
@@ -213,11 +221,11 @@ class GSD_Public {
                             <?php _e('Search', 'gun-shop-directory'); ?>
                         </button>
 
-                        <?php if ($atts['show_add_button'] === 'true' && is_user_logged_in() && get_option('gsd_allow_user_submissions', '1') == '1') : ?>
-                            <a href="#gsd-submit-form" class="gsd-button gsd-button-secondary gsd-submit-trigger">
+                        <?php if ($atts['show_add_button'] === 'true' && get_option('gsd_allow_user_submissions', '1') == '1') : ?>
+                            <button type="button" class="gsd-button gsd-button-secondary gsd-submit-trigger">
                                 <span class="dashicons dashicons-plus-alt"></span>
                                 <?php _e('Add Listing', 'gun-shop-directory'); ?>
-                            </a>
+                            </button>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -530,8 +538,10 @@ class GSD_Public {
         $city = get_post_meta($listing_id, '_gsd_city', true);
         $state = get_post_meta($listing_id, '_gsd_state', true);
         $phone = get_post_meta($listing_id, '_gsd_phone', true);
+        $has_thumb = has_post_thumbnail($listing_id);
+        $layout_class = $has_thumb ? 'gsd-listing-detailed' : 'gsd-listing-detailed gsd-no-thumb';
         ?>
-        <div class="gsd-listing-row gsd-listing-detailed">
+        <div class="gsd-listing-row <?php echo $layout_class; ?>">
             <?php if (has_post_thumbnail($listing_id)) : ?>
                 <div class="gsd-listing-thumb">
                     <a href="<?php echo get_permalink($listing_id); ?>">
