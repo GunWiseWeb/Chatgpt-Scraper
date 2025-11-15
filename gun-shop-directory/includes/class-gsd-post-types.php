@@ -10,6 +10,26 @@ class GSD_Post_Types {
         add_action('add_meta_boxes', array($this, 'add_meta_boxes'));
         add_action('save_post_gsd_listing', array($this, 'save_listing_meta'));
         add_filter('query_vars', array($this, 'add_query_vars'));
+        add_action('pre_get_posts', array($this, 'modify_archive_query'));
+    }
+
+    /**
+     * Modify archive query to ensure listings show up
+     */
+    public function modify_archive_query($query) {
+        // Only modify main query on frontend for our archive
+        if (is_admin() || !$query->is_main_query()) {
+            return;
+        }
+
+        // Only for gsd_listing archive
+        if (!is_post_type_archive('gsd_listing')) {
+            return;
+        }
+
+        // Ensure we're getting published listings
+        $query->set('post_type', 'gsd_listing');
+        $query->set('post_status', 'publish');
     }
 
     public function register_post_types() {
