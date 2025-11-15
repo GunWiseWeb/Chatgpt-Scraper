@@ -44,6 +44,21 @@ add_action('plugins_loaded', 'gsd_init');
 function gsd_init() {
     new GSD_Post_Types();
     new GSD_Reviews();
-    new GSD_Public();
-    new GSD_Admin();
+
+    $public = new GSD_Public('gun-shop-directory', GSD_VERSION);
+    add_action('wp_enqueue_scripts', array($public, 'enqueue_styles'));
+    add_action('wp_enqueue_scripts', array($public, 'enqueue_scripts'));
+    add_action('init', array($public, 'register_shortcodes'));
+    add_action('wp_ajax_gsd_submit_claim', array($public, 'handle_claim_submission'));
+    add_action('wp_ajax_nopriv_gsd_submit_claim', array($public, 'handle_claim_submission'));
+    add_action('wp_ajax_gsd_submit_review', array($public, 'handle_review_submission'));
+    add_action('wp_ajax_nopriv_gsd_submit_review', array($public, 'handle_review_submission'));
+
+    $admin = new GSD_Admin('gun-shop-directory', GSD_VERSION);
+    add_action('admin_enqueue_scripts', array($admin, 'enqueue_styles'));
+    add_action('admin_enqueue_scripts', array($admin, 'enqueue_scripts'));
+    add_action('admin_menu', array($admin, 'add_admin_menu'));
+    add_action('admin_init', array($admin, 'register_settings'));
+    add_action('wp_ajax_gsd_approve_claim', array($admin, 'approve_claim'));
+    add_action('wp_ajax_gsd_reject_claim', array($admin, 'reject_claim'));
 }
