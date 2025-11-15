@@ -17,48 +17,30 @@ if (!defined('WPINC')) {
 define('GSD_VERSION', '2.0.0');
 define('GSD_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('GSD_PLUGIN_URL', plugin_dir_url(__FILE__));
+define('GSD_PLUGIN_BASENAME', plugin_basename(__FILE__));
 
 // Activation
-register_activation_hook(__FILE__, 'gsd_activate');
-function gsd_activate() {
+function activate_gun_shop_directory() {
     require_once GSD_PLUGIN_DIR . 'includes/class-gsd-activator.php';
     GSD_Activator::activate();
     flush_rewrite_rules();
 }
 
 // Deactivation
-register_deactivation_hook(__FILE__, 'gsd_deactivate');
-function gsd_deactivate() {
+function deactivate_gun_shop_directory() {
     flush_rewrite_rules();
 }
 
+register_activation_hook(__FILE__, 'activate_gun_shop_directory');
+register_deactivation_hook(__FILE__, 'deactivate_gun_shop_directory');
+
 // Load core
-require GSD_PLUGIN_DIR . 'includes/class-gsd-post-types.php';
-require GSD_PLUGIN_DIR . 'includes/class-gsd-reviews.php';
-require GSD_PLUGIN_DIR . 'includes/class-gsd-public.php';
-require GSD_PLUGIN_DIR . 'includes/class-gsd-admin.php';
-require GSD_PLUGIN_DIR . 'includes/class-gsd-activator.php';
+require GSD_PLUGIN_DIR . 'includes/class-gsd-core.php';
 
-// Initialize
-add_action('plugins_loaded', 'gsd_init');
-function gsd_init() {
-    new GSD_Post_Types();
-    new GSD_Reviews();
-
-    $public = new GSD_Public('gun-shop-directory', GSD_VERSION);
-    add_action('wp_enqueue_scripts', array($public, 'enqueue_styles'));
-    add_action('wp_enqueue_scripts', array($public, 'enqueue_scripts'));
-    add_action('init', array($public, 'register_shortcodes'));
-    add_action('wp_ajax_gsd_submit_claim', array($public, 'handle_claim_submission'));
-    add_action('wp_ajax_nopriv_gsd_submit_claim', array($public, 'handle_claim_submission'));
-    add_action('wp_ajax_gsd_submit_review', array($public, 'handle_review_submission'));
-    add_action('wp_ajax_nopriv_gsd_submit_review', array($public, 'handle_review_submission'));
-
-    $admin = new GSD_Admin('gun-shop-directory', GSD_VERSION);
-    add_action('admin_enqueue_scripts', array($admin, 'enqueue_styles'));
-    add_action('admin_enqueue_scripts', array($admin, 'enqueue_scripts'));
-    add_action('admin_menu', array($admin, 'add_admin_menu'));
-    add_action('admin_init', array($admin, 'register_settings'));
-    add_action('wp_ajax_gsd_approve_claim', array($admin, 'approve_claim'));
-    add_action('wp_ajax_gsd_reject_claim', array($admin, 'reject_claim'));
+// Run plugin
+function run_gun_shop_directory() {
+    $plugin = new GSD_Core();
+    $plugin->run();
 }
+
+run_gun_shop_directory();
