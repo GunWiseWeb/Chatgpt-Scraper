@@ -309,6 +309,48 @@ while (have_posts()) : the_post();
                 <?php endif; ?>
             </div>
 
+            <!-- Claim Business -->
+            <?php
+            $is_claimed = get_post_meta($listing_id, '_gsd_claimed', true);
+            $claimed_by = get_post_meta($listing_id, '_gsd_claimed_by', true);
+            $current_user_id = get_current_user_id();
+            $is_owner = $current_user_id && $claimed_by == $current_user_id;
+            $pending_claim = get_post_meta($listing_id, '_gsd_claim_pending', true);
+            $can_claim = is_user_logged_in() && !$is_claimed && !$pending_claim;
+            ?>
+
+            <?php if ($is_owner) : ?>
+                <div class="gsd-sidebar-box gsd-claim-box gsd-claimed">
+                    <div class="gsd-claim-badge">
+                        <span class="dashicons dashicons-yes-alt"></span>
+                        <strong><?php _e('Verified Owner', 'gun-shop-directory'); ?></strong>
+                    </div>
+                    <p><?php _e('You own this listing', 'gun-shop-directory'); ?></p>
+                </div>
+            <?php elseif ($pending_claim) : ?>
+                <div class="gsd-sidebar-box gsd-claim-box gsd-claim-pending">
+                    <div class="gsd-claim-badge">
+                        <span class="dashicons dashicons-clock"></span>
+                        <strong><?php _e('Claim Pending', 'gun-shop-directory'); ?></strong>
+                    </div>
+                    <p><?php _e('A claim for this business is pending review', 'gun-shop-directory'); ?></p>
+                </div>
+            <?php elseif ($can_claim) : ?>
+                <div class="gsd-sidebar-box gsd-claim-box">
+                    <h3><?php _e('Own This Business?', 'gun-shop-directory'); ?></h3>
+                    <p><?php _e('Claim your business to update information and respond to reviews.', 'gun-shop-directory'); ?></p>
+                    <a href="#" class="gsd-button gsd-button-secondary gsd-claim-trigger" data-listing-id="<?php echo $listing_id; ?>">
+                        <span class="dashicons dashicons-businessman"></span>
+                        <?php _e('Claim This Business', 'gun-shop-directory'); ?>
+                    </a>
+                </div>
+            <?php elseif (!is_user_logged_in() && !$is_claimed) : ?>
+                <div class="gsd-sidebar-box gsd-claim-box">
+                    <h3><?php _e('Own This Business?', 'gun-shop-directory'); ?></h3>
+                    <p><?php printf(__('<a href="%s">Log in</a> to claim this business.', 'gun-shop-directory'), wp_login_url(get_permalink())); ?></p>
+                </div>
+            <?php endif; ?>
+
             <!-- Social Media -->
             <?php if ($facebook || $twitter || $instagram) : ?>
                 <div class="gsd-sidebar-box">
@@ -340,6 +382,50 @@ while (have_posts()) : the_post();
                     <div id="gsd-map" class="gsd-map" data-lat="<?php echo esc_attr($latitude); ?>" data-lng="<?php echo esc_attr($longitude); ?>"></div>
                 </div>
             <?php endif; ?>
+        </div>
+    </div>
+</div>
+
+<!-- Claim Business Modal -->
+<div id="gsd-claim-modal" class="gsd-modal" style="display:none;">
+    <div class="gsd-modal-overlay"></div>
+    <div class="gsd-modal-content">
+        <div class="gsd-modal-header">
+            <h2><?php _e('Claim This Business', 'gun-shop-directory'); ?></h2>
+            <button class="gsd-modal-close">&times;</button>
+        </div>
+        <div class="gsd-modal-body">
+            <p><?php _e('Please provide information to verify that you own or manage this business. An administrator will review your claim.', 'gun-shop-directory'); ?></p>
+            <form id="gsd-claim-form">
+                <input type="hidden" name="listing_id" id="gsd-claim-listing-id" value="">
+
+                <div class="gsd-form-group">
+                    <label><?php _e('Your Name', 'gun-shop-directory'); ?> <span class="required">*</span></label>
+                    <input type="text" name="claimant_name" required class="gsd-input">
+                </div>
+
+                <div class="gsd-form-group">
+                    <label><?php _e('Your Position', 'gun-shop-directory'); ?> <span class="required">*</span></label>
+                    <input type="text" name="claimant_position" placeholder="<?php _e('e.g., Owner, Manager', 'gun-shop-directory'); ?>" required class="gsd-input">
+                </div>
+
+                <div class="gsd-form-group">
+                    <label><?php _e('Business Phone', 'gun-shop-directory'); ?> <span class="required">*</span></label>
+                    <input type="tel" name="business_phone" required class="gsd-input">
+                </div>
+
+                <div class="gsd-form-group">
+                    <label><?php _e('Verification Details', 'gun-shop-directory'); ?> <span class="required">*</span></label>
+                    <textarea name="verification_details" rows="4" placeholder="<?php _e('Provide details to help us verify your ownership (e.g., business registration number, EIN, etc.)', 'gun-shop-directory'); ?>" required class="gsd-textarea"></textarea>
+                </div>
+
+                <div class="gsd-form-message"></div>
+
+                <div class="gsd-modal-actions">
+                    <button type="button" class="gsd-button gsd-modal-close"><?php _e('Cancel', 'gun-shop-directory'); ?></button>
+                    <button type="submit" class="gsd-button gsd-button-primary"><?php _e('Submit Claim', 'gun-shop-directory'); ?></button>
+                </div>
+            </form>
         </div>
     </div>
 </div>

@@ -78,7 +78,7 @@
 
 .gsd-search-form {
     background: white;
-    padding: 35px;
+    padding: 25px;
     border-radius: 15px;
     box-shadow: 0 10px 40px var(--gsd-shadow);
     border: 1px solid var(--gsd-border);
@@ -96,11 +96,29 @@
     background: var(--gsd-gradient-3);
 }
 
-.gsd-search-fields {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+.gsd-search-main {
+    display: flex;
     gap: 15px;
-    align-items: end;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.gsd-search-inputs {
+    display: flex;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+    flex-wrap: wrap;
+}
+
+.gsd-search-field {
+    flex: 1;
+    min-width: 150px;
+}
+
+.gsd-search-field-wide {
+    flex: 2;
+    min-width: 250px;
 }
 
 .gsd-search-field input,
@@ -123,25 +141,38 @@
     transform: translateY(-1px);
 }
 
+.gsd-search-actions {
+    display: flex;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
 .gsd-search-submit {
-    width: 100%;
-    padding: 14px 30px;
+    padding: 14px 28px;
     background: var(--gsd-gradient-3);
     color: white;
     border: none;
     border-radius: 8px;
-    font-size: 1.05em;
+    font-size: 1em;
     font-weight: 700;
     cursor: pointer;
     transition: all 0.3s ease;
     box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
 }
 
 .gsd-search-submit:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(79, 172, 254, 0.4);
+}
+
+.gsd-search-submit .dashicons {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
 }
 
 /* ===========================
@@ -320,7 +351,10 @@
    Buttons
    =========================== */
 .gsd-button {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
     padding: 12px 30px;
     border-radius: 8px;
     text-decoration: none;
@@ -332,6 +366,12 @@
     text-align: center;
     position: relative;
     overflow: hidden;
+}
+
+.gsd-button .dashicons {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
 }
 
 .gsd-button::before {
@@ -1045,8 +1085,30 @@
         grid-template-columns: 1fr;
     }
 
-    .gsd-search-fields {
-        grid-template-columns: 1fr;
+    .gsd-search-main {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .gsd-search-inputs {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .gsd-search-field,
+    .gsd-search-field-wide {
+        min-width: 100%;
+        width: 100%;
+    }
+
+    .gsd-search-actions {
+        width: 100%;
+        flex-direction: column;
+    }
+
+    .gsd-search-actions .gsd-button {
+        width: 100%;
+        justify-content: center;
     }
 
     .gsd-results-bar {
@@ -1229,7 +1291,7 @@
 .gsd-listing-detailed {
     display: flex;
     gap: 20px;
-    align-items: flex-start;
+    align-items: stretch;
 }
 
 .gsd-listing-thumb {
@@ -1253,6 +1315,9 @@
 
 .gsd-listing-details {
     flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
 }
 
 .gsd-listing-header {
@@ -1266,6 +1331,8 @@
 .gsd-listing-header .gsd-listing-title {
     font-size: 1.3em;
     margin: 0;
+    flex: 1;
+    min-width: 0;
 }
 
 .gsd-badge-sm {
@@ -1304,12 +1371,149 @@
 .gsd-listing-action {
     flex-shrink: 0;
     align-self: center;
+    margin-left: auto;
+}
+
+.gsd-listing-detailed .gsd-listing-action {
+    align-self: flex-start;
+    padding-top: 5px;
 }
 
 /* Button Sizes */
 .gsd-button-sm {
     padding: 8px 20px;
     font-size: 0.9em;
+}
+
+/* ===========================
+   Claim Business Styles
+   =========================== */
+.gsd-claim-box {
+    border-left: 4px solid var(--gsd-primary-light);
+}
+
+.gsd-claim-box.gsd-claimed {
+    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+    border-left-color: var(--gsd-success);
+}
+
+.gsd-claim-box.gsd-claim-pending {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border-left-color: var(--gsd-warning);
+}
+
+.gsd-claim-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.gsd-claim-badge .dashicons {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+}
+
+.gsd-claimed .gsd-claim-badge {
+    color: var(--gsd-success);
+}
+
+.gsd-claim-pending .gsd-claim-badge {
+    color: var(--gsd-warning);
+}
+
+/* Modal Styles */
+.gsd-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 999999;
+}
+
+.gsd-modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+}
+
+.gsd-modal-content {
+    position: relative;
+    max-width: 600px;
+    margin: 50px auto;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    max-height: calc(100vh - 100px);
+    overflow-y: auto;
+    animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.gsd-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 25px 30px;
+    border-bottom: 2px solid var(--gsd-border);
+}
+
+.gsd-modal-header h2 {
+    margin: 0;
+    color: var(--gsd-dark);
+}
+
+.gsd-modal-close {
+    background: none;
+    border: none;
+    font-size: 32px;
+    line-height: 1;
+    cursor: pointer;
+    color: #999;
+    transition: color 0.3s;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+}
+
+.gsd-modal-close:hover {
+    color: var(--gsd-secondary);
+}
+
+.gsd-modal-body {
+    padding: 30px;
+}
+
+.gsd-modal-body > p {
+    margin-top: 0;
+    color: #666;
+    line-height: 1.6;
+}
+
+.gsd-modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 25px;
+}
+
+body.gsd-modal-open {
+    overflow: hidden;
 }
 
 /* ===========================

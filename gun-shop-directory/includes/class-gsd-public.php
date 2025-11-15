@@ -176,43 +176,46 @@ class GSD_Public {
      * Search shortcode.
      */
     public function search_shortcode($atts) {
+        $atts = shortcode_atts(array(
+            'show_add_button' => 'false',
+        ), $atts);
+
         ob_start();
         ?>
-        <div class="gsd-search-form">
-            <form method="get" action="<?php echo get_post_type_archive_link('gsd_listing'); ?>">
-                <div class="gsd-search-fields">
-                    <div class="gsd-search-field">
-                        <input type="text" name="gsd_search" placeholder="<?php _e('Search gun shops...', 'gun-shop-directory'); ?>" value="<?php echo esc_attr(get_query_var('gsd_search')); ?>">
+        <div class="gsd-search-wrapper">
+            <form method="get" action="<?php echo get_post_type_archive_link('gsd_listing'); ?>" class="gsd-search-form">
+                <div class="gsd-search-main">
+                    <div class="gsd-search-inputs">
+                        <div class="gsd-search-field gsd-search-field-wide">
+                            <input type="text" name="gsd_search" placeholder="<?php _e('Search gun shops...', 'gun-shop-directory'); ?>" value="<?php echo esc_attr(get_query_var('gsd_search')); ?>">
+                        </div>
+
+                        <div class="gsd-search-field">
+                            <input type="text" name="gsd_location" placeholder="<?php _e('Location', 'gun-shop-directory'); ?>" value="<?php echo esc_attr(get_query_var('gsd_location')); ?>">
+                        </div>
+
+                        <div class="gsd-search-field">
+                            <select name="gsd_type">
+                                <option value=""><?php _e('All Types', 'gun-shop-directory'); ?></option>
+                                <option value="brick_mortar" <?php selected(get_query_var('gsd_type'), 'brick_mortar'); ?>><?php _e('Brick & Mortar', 'gun-shop-directory'); ?></option>
+                                <option value="ecommerce" <?php selected(get_query_var('gsd_type'), 'ecommerce'); ?>><?php _e('Online Store', 'gun-shop-directory'); ?></option>
+                                <option value="both" <?php selected(get_query_var('gsd_type'), 'both'); ?>><?php _e('Both', 'gun-shop-directory'); ?></option>
+                            </select>
+                        </div>
                     </div>
 
-                    <div class="gsd-search-field">
-                        <input type="text" name="gsd_location" placeholder="<?php _e('Location...', 'gun-shop-directory'); ?>" value="<?php echo esc_attr(get_query_var('gsd_location')); ?>">
-                    </div>
+                    <div class="gsd-search-actions">
+                        <button type="submit" class="gsd-search-submit gsd-button gsd-button-primary">
+                            <span class="dashicons dashicons-search"></span>
+                            <?php _e('Search', 'gun-shop-directory'); ?>
+                        </button>
 
-                    <div class="gsd-search-field">
-                        <select name="gsd_category">
-                            <option value=""><?php _e('All Categories', 'gun-shop-directory'); ?></option>
-                            <?php
-                            $categories = get_terms(array('taxonomy' => 'gsd_category', 'hide_empty' => false));
-                            foreach ($categories as $cat) {
-                                $selected = get_query_var('gsd_category') == $cat->slug ? 'selected' : '';
-                                echo '<option value="' . esc_attr($cat->slug) . '" ' . $selected . '>' . esc_html($cat->name) . '</option>';
-                            }
-                            ?>
-                        </select>
-                    </div>
-
-                    <div class="gsd-search-field">
-                        <select name="gsd_type">
-                            <option value=""><?php _e('All Types', 'gun-shop-directory'); ?></option>
-                            <option value="brick_mortar" <?php selected(get_query_var('gsd_type'), 'brick_mortar'); ?>><?php _e('Brick & Mortar', 'gun-shop-directory'); ?></option>
-                            <option value="ecommerce" <?php selected(get_query_var('gsd_type'), 'ecommerce'); ?>><?php _e('E-commerce', 'gun-shop-directory'); ?></option>
-                            <option value="both" <?php selected(get_query_var('gsd_type'), 'both'); ?>><?php _e('Both', 'gun-shop-directory'); ?></option>
-                        </select>
-                    </div>
-
-                    <div class="gsd-search-field">
-                        <button type="submit" class="gsd-search-submit"><?php _e('Search', 'gun-shop-directory'); ?></button>
+                        <?php if ($atts['show_add_button'] === 'true' && is_user_logged_in() && get_option('gsd_allow_user_submissions', '1') == '1') : ?>
+                            <a href="#gsd-submit-form" class="gsd-button gsd-button-secondary gsd-submit-trigger">
+                                <span class="dashicons dashicons-plus-alt"></span>
+                                <?php _e('Add Listing', 'gun-shop-directory'); ?>
+                            </a>
+                        <?php endif; ?>
                     </div>
                 </div>
             </form>
@@ -336,16 +339,7 @@ class GSD_Public {
         <div class="gsd-directory-wrapper <?php echo $layout_class; ?>">
             <?php if ($atts['show_search'] === 'true') : ?>
                 <div class="gsd-directory-search">
-                    <?php echo $this->search_shortcode(array()); ?>
-                </div>
-            <?php endif; ?>
-
-            <?php if ($atts['show_submit'] === 'true' && is_user_logged_in() && get_option('gsd_allow_user_submissions', '1') == '1') : ?>
-                <div class="gsd-directory-submit-banner">
-                    <span><?php _e('Have a gun shop?', 'gun-shop-directory'); ?></span>
-                    <a href="#gsd-submit-form" class="gsd-button gsd-button-secondary gsd-submit-trigger">
-                        <?php _e('Add Your Listing', 'gun-shop-directory'); ?>
-                    </a>
+                    <?php echo $this->search_shortcode(array('show_add_button' => $atts['show_submit'])); ?>
                 </div>
             <?php endif; ?>
 
@@ -769,5 +763,75 @@ class GSD_Public {
             wp_redirect(add_query_arg('submitted', 'true', get_permalink()));
             exit;
         }
+    }
+
+    /**
+     * Handle business claim submission via AJAX.
+     */
+    public function ajax_submit_claim() {
+        check_ajax_referer('gsd_submit_review', 'nonce');
+
+        if (!is_user_logged_in()) {
+            wp_send_json_error(array('message' => __('You must be logged in to claim a business.', 'gun-shop-directory')));
+        }
+
+        $listing_id = intval($_POST['listing_id']);
+        $claimant_name = sanitize_text_field($_POST['claimant_name']);
+        $claimant_position = sanitize_text_field($_POST['claimant_position']);
+        $business_phone = sanitize_text_field($_POST['business_phone']);
+        $verification_details = sanitize_textarea_field($_POST['verification_details']);
+
+        // Check if listing exists
+        if (!get_post($listing_id) || get_post_type($listing_id) !== 'gsd_listing') {
+            wp_send_json_error(array('message' => __('Invalid listing.', 'gun-shop-directory')));
+        }
+
+        // Check if already claimed or pending
+        $is_claimed = get_post_meta($listing_id, '_gsd_claimed', true);
+        $pending_claim = get_post_meta($listing_id, '_gsd_claim_pending', true);
+
+        if ($is_claimed) {
+            wp_send_json_error(array('message' => __('This business has already been claimed.', 'gun-shop-directory')));
+        }
+
+        if ($pending_claim) {
+            wp_send_json_error(array('message' => __('A claim for this business is already pending review.', 'gun-shop-directory')));
+        }
+
+        // Store claim data
+        $claim_data = array(
+            'user_id' => get_current_user_id(),
+            'claimant_name' => $claimant_name,
+            'claimant_position' => $claimant_position,
+            'business_phone' => $business_phone,
+            'verification_details' => $verification_details,
+            'submitted_at' => current_time('mysql'),
+        );
+
+        update_post_meta($listing_id, '_gsd_claim_data', $claim_data);
+        update_post_meta($listing_id, '_gsd_claim_pending', '1');
+
+        // Send notification to admin
+        $admin_email = get_option('admin_email');
+        $listing_title = get_the_title($listing_id);
+        $listing_url = get_edit_post_link($listing_id);
+        $user = wp_get_current_user();
+
+        $subject = sprintf(__('[%s] New Business Claim Request', 'gun-shop-directory'), get_bloginfo('name'));
+        $message = sprintf(
+            __("A new business claim has been submitted:\n\nBusiness: %s\nClaimant: %s (%s)\nPosition: %s\nUser: %s\n\nReview claim: %s", 'gun-shop-directory'),
+            $listing_title,
+            $claimant_name,
+            $business_phone,
+            $claimant_position,
+            $user->user_email,
+            $listing_url
+        );
+
+        wp_mail($admin_email, $subject, $message);
+
+        wp_send_json_success(array(
+            'message' => __('Your claim has been submitted successfully! An administrator will review it shortly.', 'gun-shop-directory')
+        ));
     }
 }

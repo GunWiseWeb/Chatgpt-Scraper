@@ -81,6 +81,10 @@ class GSD_Core {
 
         // Handle listing submission
         add_action('template_redirect', array($public, 'handle_listing_submission'));
+
+        // AJAX handlers
+        add_action('wp_ajax_gsd_submit_claim', array($public, 'ajax_submit_claim'));
+        add_action('wp_ajax_nopriv_gsd_submit_claim', array($public, 'ajax_submit_claim'));
     }
 
     /**

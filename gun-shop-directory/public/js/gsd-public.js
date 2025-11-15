@@ -181,10 +181,10 @@
         /**
          * Toggle submit listing form in directory view
          */
-        $('.gsd-submit-toggle-btn').on('click', function(e) {
+        $('.gsd-submit-trigger').on('click', function(e) {
             e.preventDefault();
 
-            var $submitSection = $('#gsd-directory-submit-form');
+            var $submitSection = $('#gsd-submit-form');
 
             if ($submitSection.length) {
                 $submitSection.slideToggle(300, function() {
@@ -196,6 +196,79 @@
                     }
                 });
             }
+        });
+
+        /**
+         * Claim Business Modal
+         */
+        $('.gsd-claim-trigger').on('click', function(e) {
+            e.preventDefault();
+            var listingId = $(this).data('listing-id');
+            $('#gsd-claim-listing-id').val(listingId);
+            $('#gsd-claim-modal').fadeIn(300);
+            $('body').addClass('gsd-modal-open');
+        });
+
+        $('.gsd-modal-close').on('click', function() {
+            $('#gsd-claim-modal').fadeOut(300);
+            $('body').removeClass('gsd-modal-open');
+        });
+
+        $('.gsd-modal-overlay').on('click', function() {
+            $('#gsd-claim-modal').fadeOut(300);
+            $('body').removeClass('gsd-modal-open');
+        });
+
+        /**
+         * Claim Form Submission
+         */
+        $('#gsd-claim-form').on('submit', function(e) {
+            e.preventDefault();
+
+            var $form = $(this);
+            var $submitBtn = $form.find('button[type="submit"]');
+            var $message = $form.find('.gsd-form-message');
+            var originalBtnText = $submitBtn.text();
+
+            $submitBtn.prop('disabled', true).text('Submitting...');
+            $message.removeClass('success error').hide();
+
+            var formData = {
+                action: 'gsd_submit_claim',
+                nonce: gsdPublic.nonce,
+                listing_id: $form.find('input[name="listing_id"]').val(),
+                claimant_name: $form.find('input[name="claimant_name"]').val(),
+                claimant_position: $form.find('input[name="claimant_position"]').val(),
+                business_phone: $form.find('input[name="business_phone"]').val(),
+                verification_details: $form.find('textarea[name="verification_details"]').val()
+            };
+
+            $.ajax({
+                url: gsdPublic.ajax_url,
+                type: 'POST',
+                data: formData,
+                success: function(response) {
+                    if (response.success) {
+                        $message.addClass('success').text(response.data.message).show();
+                        $form[0].reset();
+
+                        // Close modal and reload after 2 seconds
+                        setTimeout(function() {
+                            $('#gsd-claim-modal').fadeOut(300);
+                            $('body').removeClass('gsd-modal-open');
+                            location.reload();
+                        }, 2000);
+                    } else {
+                        $message.addClass('error').text(response.data.message).show();
+                    }
+                },
+                error: function() {
+                    $message.addClass('error').text('An error occurred. Please try again.').show();
+                },
+                complete: function() {
+                    $submitBtn.prop('disabled', false).text(originalBtnText);
+                }
+            });
         });
 
     });
