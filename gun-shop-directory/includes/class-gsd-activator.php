@@ -66,19 +66,39 @@ class GSD_Activator {
         add_option('gsd_directory_show_search', '1');
         add_option('gsd_directory_show_submit', '1');
 
-        // Create directory page
-        $page_check = get_page_by_title('Gun Shop Directory');
-        if (!$page_check) {
-            $directory_page = array(
-                'post_title'    => 'Gun Shop Directory',
-                'post_content'  => '[gsd_directory]',
-                'post_status'   => 'publish',
-                'post_type'     => 'page',
-                'post_author'   => 1,
-                'comment_status' => 'closed'
-            );
-            $page_id = wp_insert_post($directory_page);
-            add_option('gsd_directory_page_id', $page_id);
+        // Create directory page if it doesn't exist
+        $existing_page_id = get_option('gsd_directory_page_id');
+
+        // Check if page exists or if stored ID is invalid
+        if (!$existing_page_id || !get_post($existing_page_id)) {
+            // Look for existing page by title
+            $existing_pages = get_posts(array(
+                'post_type' => 'page',
+                'post_status' => 'any',
+                'title' => 'Gun Shop Directory',
+                'posts_per_page' => 1,
+                'fields' => 'ids'
+            ));
+
+            if (!empty($existing_pages)) {
+                // Page exists, just store its ID
+                update_option('gsd_directory_page_id', $existing_pages[0]);
+            } else {
+                // Create new page
+                $directory_page = array(
+                    'post_title'    => 'Gun Shop Directory',
+                    'post_content'  => '[gsd_directory]',
+                    'post_status'   => 'publish',
+                    'post_type'     => 'page',
+                    'post_author'   => get_current_user_id() ?: 1,
+                    'comment_status' => 'closed'
+                );
+                $page_id = wp_insert_post($directory_page);
+
+                if ($page_id && !is_wp_error($page_id)) {
+                    update_option('gsd_directory_page_id', $page_id);
+                }
+            }
         }
 
         // Flush rewrite rules
