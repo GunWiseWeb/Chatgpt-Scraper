@@ -1,21 +1,12 @@
 /**
  * Gun Shop Directory - Public JavaScript
+ * Clean rewrite - no complex features, just basic functionality
  */
 
 (function($) {
     'use strict';
 
     $(document).ready(function() {
-
-        // Note: URL restoration removed to prevent conflicts
-
-        /**
-         * Ensure listing links work - stop any interference with link clicks
-         */
-        $(document).on('click', '.gsd-listing-card a:not([href^="#"]):not(.gsd-report-trigger):not(.gsd-claim-trigger)', function(e) {
-            // For actual listing navigation links, stop propagation to prevent form submission
-            e.stopPropagation();
-        });
 
         /**
          * AJAX Search Form Submission
@@ -52,7 +43,7 @@
                 data: formData,
                 success: function(response) {
                     if (response.success) {
-                        // Replace just the listings container, not its parent
+                        // Replace listings container
                         $resultsContainer.replaceWith(response.data.html);
 
                         // Update count
@@ -73,7 +64,6 @@
                                     $existingPagination.remove();
                                 }
                             } else if (response.data.pagination) {
-                                // Add pagination after listings if it doesn't exist
                                 $('.gsd-listings-grid, .gsd-listings-list').after(response.data.pagination);
                             }
                         }
@@ -96,7 +86,7 @@
         });
 
         /**
-         * AJAX Pagination - Handle page link clicks
+         * AJAX Pagination
          */
         $(document).on('click', '.gsd-page-link', function(e) {
             e.preventDefault();
@@ -105,7 +95,6 @@
             var $pagination = $link.closest('.gsd-pagination');
             var page = $link.data('page');
 
-            // Get search params from pagination data attributes
             var formData = {
                 action: 'gsd_search_listings',
                 gsd_location: $pagination.data('location'),
@@ -124,10 +113,8 @@
                 data: formData,
                 success: function(response) {
                     if (response.success) {
-                        // Replace listings
                         $resultsContainer.replaceWith(response.data.html);
 
-                        // Update count
                         if ($resultsCount.length && response.data.count !== undefined) {
                             var countText = response.data.count === 1 ?
                                 response.data.count + ' listing found' :
@@ -135,7 +122,6 @@
                             $resultsCount.text(countText);
                         }
 
-                        // Update pagination
                         if (response.data.pagination !== undefined) {
                             var $existingPagination = $('.navigation.pagination, .gsd-pagination');
                             if ($existingPagination.length) {
@@ -149,7 +135,6 @@
                             }
                         }
 
-                        // Scroll to results
                         $('html, body').animate({
                             scrollTop: $('.gsd-results-bar').offset().top - 100
                         }, 300);
@@ -161,10 +146,32 @@
             });
         });
 
-        // Search persistence removed - was causing navigation issues
+        /**
+         * Helper functions
+         */
+        function setCookie(name, value, days) {
+            var expires = "";
+            if (days) {
+                var date = new Date();
+                date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+                expires = "; expires=" + date.toUTCString();
+            }
+            document.cookie = name + "=" + (value || "") + expires + "; path=/";
+        }
+
+        function getCookie(name) {
+            var nameEQ = name + "=";
+            var ca = document.cookie.split(';');
+            for (var i = 0; i < ca.length; i++) {
+                var c = ca[i];
+                while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+            }
+            return null;
+        }
 
         /**
-         * Review Form Submission (both create and update)
+         * Review Form
          */
         $('#gsd-review-form').on('submit', function(e) {
             e.preventDefault();
@@ -175,7 +182,6 @@
             var mode = $form.data('mode') || 'create';
             var originalBtnText = $submitBtn.text();
 
-            // Disable submit button
             $submitBtn.prop('disabled', true).text('Submitting...');
             $message.removeClass('success error').hide();
 
@@ -188,7 +194,6 @@
                 content: $form.find('textarea[name="content"]').val()
             };
 
-            // Add review_id if updating
             if (mode === 'update') {
                 formData.review_id = $form.find('input[name="review_id"]').val();
             }
@@ -200,23 +205,14 @@
                 success: function(response) {
                     if (response.success) {
                         $message.addClass('success').text(response.data.message).show();
-
-                        // Only reset form if creating new review
                         if (mode === 'create') {
                             $form[0].reset();
                         }
-
-                        // Scroll to message
-                        $('html, body').animate({
-                            scrollTop: $message.offset().top - 100
-                        }, 500);
-
-                        // Reload page after 2 seconds to show updated review
                         setTimeout(function() {
                             location.reload();
                         }, 2000);
                     } else {
-                        $message.addClass('error').text(response.data.message).show();
+                        $message.addClass('error').text(response.data.message || 'An error occurred').show();
                     }
                 },
                 error: function() {
@@ -229,109 +225,23 @@
         });
 
         /**
-         * Google Maps Integration
+         * Star rating
          */
-        if (typeof google !== 'undefined' && google.maps) {
-            var $map = $('#gsd-map');
-            if ($map.length) {
-                var lat = parseFloat($map.data('lat'));
-                var lng = parseFloat($map.data('lng'));
-
-                if (lat && lng) {
-                    var mapOptions = {
-                        center: new google.maps.LatLng(lat, lng),
-                        zoom: 15,
-                        mapTypeId: google.maps.MapTypeId.ROADMAP
-                    };
-
-                    var map = new google.maps.Map($map[0], mapOptions);
-
-                    var marker = new google.maps.Marker({
-                        position: new google.maps.LatLng(lat, lng),
-                        map: map,
-                        title: $('h1.gsd-listing-title').text()
-                    });
+        $('.gsd-star-rating input[type="radio"]').on('change', function() {
+            var rating = $(this).val();
+            var $container = $(this).closest('.gsd-star-rating');
+            $container.find('label').each(function() {
+                var labelRating = $(this).attr('for').replace('rating-', '');
+                if (labelRating <= rating) {
+                    $(this).addClass('selected');
+                } else {
+                    $(this).removeClass('selected');
                 }
-            }
-        }
-
-        /**
-         * Layout selector
-         */
-        $('#gsd-layout').on('change', function() {
-            var layout = $(this).val();
-            // Set cookie for 30 days
-            document.cookie = 'gsd_layout=' + layout + '; path=/; max-age=' + (30 * 24 * 60 * 60);
-            // Reload page to apply layout
-            window.location.reload();
-        });
-
-        /**
-         * Sort functionality
-         */
-        $('#gsd-sort').on('change', function() {
-            var orderby = $(this).val();
-            var url = new URL(window.location.href);
-            url.searchParams.set('orderby', orderby);
-            window.location.href = url.toString();
-        });
-
-        /**
-         * Review Sort functionality
-         */
-        $('#gsd-review-sort').on('change', function() {
-            var sortBy = $(this).val();
-            var $reviewsList = $('.gsd-reviews-list');
-            var $reviews = $reviewsList.find('.gsd-review-item').get();
-
-            $reviews.sort(function(a, b) {
-                if (sortBy === 'latest') {
-                    // Sort by date (newest first) - based on DOM order
-                    return 0; // Keep original order which should be latest first
-                } else if (sortBy === 'highest') {
-                    // Sort by highest rating
-                    var ratingA = $(a).find('.gsd-review-header .gsd-stars').data('rating') ||
-                                  $(a).find('.gsd-stars input:checked').length;
-                    var ratingB = $(b).find('.gsd-review-header .gsd-stars').data('rating') ||
-                                  $(b).find('.gsd-stars input:checked').length;
-                    return ratingB - ratingA;
-                } else if (sortBy === 'lowest') {
-                    // Sort by lowest rating
-                    var ratingA = $(a).find('.gsd-review-header .gsd-stars').data('rating') ||
-                                  $(a).find('.gsd-stars input:checked').length;
-                    var ratingB = $(b).find('.gsd-review-header .gsd-stars').data('rating') ||
-                                  $(b).find('.gsd-stars input:checked').length;
-                    return ratingA - ratingB;
-                }
-                return 0;
             });
-
-            // Reorder the reviews
-            $.each($reviews, function(idx, review) {
-                $reviewsList.append(review);
-            });
-
-            // Smooth scroll to reviews
-            $('html, body').animate({
-                scrollTop: $reviewsList.offset().top - 150
-            }, 300);
         });
 
         /**
-         * Star rating hover effect
-         */
-        $('.gsd-star-input label').hover(
-            function() {
-                $(this).addClass('hover');
-                $(this).nextAll('label').addClass('hover');
-            },
-            function() {
-                $('.gsd-star-input label').removeClass('hover');
-            }
-        );
-
-        /**
-         * Smooth scroll to reviews
+         * Smooth scroll
          */
         $('a[href="#reviews"]').on('click', function(e) {
             e.preventDefault();
@@ -341,23 +251,24 @@
         });
 
         /**
-         * Image gallery (if needed)
+         * Gallery
          */
         $('.gsd-listing-gallery img').on('click', function() {
-            // Future implementation for lightbox
+            var src = $(this).attr('src');
+            window.open(src, '_blank');
         });
 
         /**
-         * Load more reviews (pagination)
+         * Load more reviews
          */
-        var reviewsPage = 1;
         $('#gsd-load-more-reviews').on('click', function(e) {
             e.preventDefault();
-
             var $btn = $(this);
             var listingId = $btn.data('listing-id');
+            var offset = $btn.data('offset');
+            var originalText = $btn.text();
 
-            $btn.prop('disabled', true).text('Loading...');
+            $btn.text('Loading...').prop('disabled', true);
 
             $.ajax({
                 url: gsdPublic.ajax_url,
@@ -365,84 +276,80 @@
                 data: {
                     action: 'gsd_load_more_reviews',
                     listing_id: listingId,
-                    page: ++reviewsPage
+                    offset: offset
                 },
                 success: function(response) {
-                    if (response.success && response.data.html) {
+                    if (response.success) {
                         $('.gsd-reviews-list').append(response.data.html);
-
+                        $btn.data('offset', parseInt(offset) + response.data.count);
                         if (!response.data.has_more) {
-                            $btn.remove();
-                        } else {
-                            $btn.prop('disabled', false).text('Load More Reviews');
+                            $btn.hide();
                         }
-                    } else {
-                        $btn.remove();
                     }
                 },
                 error: function() {
-                    $btn.prop('disabled', false).text('Load More Reviews');
+                    alert('Failed to load more reviews');
+                },
+                complete: function() {
+                    $btn.text(originalText).prop('disabled', false);
                 }
             });
         });
 
         /**
-         * Toggle submit listing form in directory view
+         * Submit listing
          */
         $(document).on('click', '.gsd-submit-trigger', function(e) {
             e.preventDefault();
-            console.log('Add listing button clicked');
+            $('#gsd-submit-form').slideToggle();
+        });
 
-            var $submitSection = $('#gsd-submit-form');
-            console.log('Submit section found:', $submitSection.length);
+        $('#gsd-submit-listing-form').on('submit', function(e) {
+            e.preventDefault();
+            var $form = $(this);
+            var $submitBtn = $form.find('button[type="submit"]');
+            var $message = $form.find('.gsd-form-message');
+            var originalBtnText = $submitBtn.text();
 
-            if ($submitSection.length) {
-                $submitSection.slideToggle(300, function() {
-                    if ($submitSection.is(':visible')) {
-                        // Scroll to form
-                        $('html, body').animate({
-                            scrollTop: $submitSection.offset().top - 100
-                        }, 300);
+            $submitBtn.prop('disabled', true).text('Submitting...');
+            $message.removeClass('success error').hide();
+
+            $.ajax({
+                url: gsdPublic.ajax_url,
+                type: 'POST',
+                data: $form.serialize() + '&action=gsd_submit_listing&nonce=' + gsdPublic.nonce,
+                success: function(response) {
+                    if (response.success) {
+                        $message.addClass('success').text(response.data.message).show();
+                        $form[0].reset();
+                    } else {
+                        $message.addClass('error').text(response.data.message || 'An error occurred').show();
                     }
-                });
-            } else {
-                console.error('Submit form section not found!');
-            }
+                },
+                error: function() {
+                    $message.addClass('error').text('An error occurred. Please try again.').show();
+                },
+                complete: function() {
+                    $submitBtn.prop('disabled', false).text(originalBtnText);
+                }
+            });
         });
 
         /**
-         * Claim Business Modal
+         * Claim listing
          */
         $(document).on('click', '.gsd-claim-trigger', function(e) {
             e.preventDefault();
-            console.log('Claim button clicked');
-
-            var listingId = $(this).data('listing-id');
-            console.log('Listing ID:', listingId);
-
-            $('#gsd-claim-listing-id').val(listingId);
-            $('#gsd-claim-modal').fadeIn(300);
-            $('body').addClass('gsd-modal-open');
+            $('#gsd-claim-modal').fadeIn();
         });
 
-        $(document).on('click', '.gsd-modal-close', function(e) {
+        $(document).on('click', '.gsd-modal-close, .gsd-modal-overlay', function(e) {
             e.preventDefault();
-            $('#gsd-claim-modal').fadeOut(300);
-            $('body').removeClass('gsd-modal-open');
+            $(this).closest('.gsd-modal').fadeOut();
         });
 
-        $(document).on('click', '.gsd-modal-overlay', function(e) {
-            e.preventDefault();
-            $('#gsd-claim-modal').fadeOut(300);
-            $('body').removeClass('gsd-modal-open');
-        });
-
-        /**
-         * Claim Form Submission
-         */
         $('#gsd-claim-form').on('submit', function(e) {
             e.preventDefault();
-
             var $form = $(this);
             var $submitBtn = $form.find('button[type="submit"]');
             var $message = $form.find('.gsd-form-message');
@@ -451,33 +358,19 @@
             $submitBtn.prop('disabled', true).text('Submitting...');
             $message.removeClass('success error').hide();
 
-            var formData = {
-                action: 'gsd_submit_claim',
-                nonce: gsdPublic.nonce,
-                listing_id: $form.find('input[name="listing_id"]').val(),
-                claimant_name: $form.find('input[name="claimant_name"]').val(),
-                claimant_position: $form.find('input[name="claimant_position"]').val(),
-                business_phone: $form.find('input[name="business_phone"]').val(),
-                verification_details: $form.find('textarea[name="verification_details"]').val()
-            };
-
             $.ajax({
                 url: gsdPublic.ajax_url,
                 type: 'POST',
-                data: formData,
+                data: $form.serialize() + '&action=gsd_submit_claim&nonce=' + gsdPublic.nonce,
                 success: function(response) {
                     if (response.success) {
                         $message.addClass('success').text(response.data.message).show();
                         $form[0].reset();
-
-                        // Close modal and reload after 2 seconds
                         setTimeout(function() {
-                            $('#gsd-claim-modal').fadeOut(300);
-                            $('body').removeClass('gsd-modal-open');
-                            location.reload();
+                            $('#gsd-claim-modal').fadeOut();
                         }, 2000);
                     } else {
-                        $message.addClass('error').text(response.data.message).show();
+                        $message.addClass('error').text(response.data.message || 'An error occurred').show();
                     }
                 },
                 error: function() {
@@ -490,29 +383,15 @@
         });
 
         /**
-         * Report Listing Modal - Updated for New Structure
+         * Report listing
          */
         $(document).on('click', '.gsd-report-trigger', function(e) {
             e.preventDefault();
-            var listingId = $(this).data('listing-id');
-            $('#gsd-report-listing-id').val(listingId);
-            document.getElementById('gsd-report-modal').style.display = 'block';
-            $('body').addClass('gsd-modal-open');
+            $('#gsd-report-modal').fadeIn();
         });
 
-        // Close other modals (claim modal)
-        $(document).on('click', '.gsd-modal-close, .gsd-modal-overlay', function(e) {
-            e.preventDefault();
-            $('.gsd-modal').fadeOut(300);
-            $('body').removeClass('gsd-modal-open');
-        });
-
-        /**
-         * Report Form Submission
-         */
         $('#gsd-report-form').on('submit', function(e) {
             e.preventDefault();
-
             var $form = $(this);
             var $submitBtn = $form.find('button[type="submit"]');
             var $message = $form.find('.gsd-form-message');
@@ -521,31 +400,19 @@
             $submitBtn.prop('disabled', true).text('Submitting...');
             $message.removeClass('success error').hide();
 
-            var formData = {
-                action: 'gsd_submit_report',
-                nonce: gsdPublic.nonce,
-                listing_id: $form.find('input[name="listing_id"]').val(),
-                reporter_email: $form.find('input[name="reporter_email"]').val(),
-                report_reason: $form.find('input[name="report_reason"]:checked').val(),
-                report_details: $form.find('textarea[name="report_details"]').val()
-            };
-
             $.ajax({
                 url: gsdPublic.ajax_url,
                 type: 'POST',
-                data: formData,
+                data: $form.serialize() + '&action=gsd_submit_report&nonce=' + gsdPublic.nonce,
                 success: function(response) {
                     if (response.success) {
                         $message.addClass('success').text(response.data.message).show();
                         $form[0].reset();
-
-                        // Close modal after 2 seconds
                         setTimeout(function() {
-                            document.getElementById('gsd-report-modal').style.display = 'none';
-                            $('body').removeClass('gsd-modal-open');
+                            $('#gsd-report-modal').fadeOut();
                         }, 2000);
                     } else {
-                        $message.addClass('error').text(response.data.message).show();
+                        $message.addClass('error').text(response.data.message || 'An error occurred').show();
                     }
                 },
                 error: function() {
@@ -558,57 +425,34 @@
         });
 
         /**
-         * AJAX Search Form Submission - DISABLED FOR PROPER PAGINATION
-         * Let the form submit normally so URL params are preserved in pagination
-         */
-        // $('.gsd-search-form').on('submit', function(e) {
-        //     AJAX disabled - form submits normally now
-        // });
-
-        /**
-         * Clear Search Form
+         * Clear search
          */
         $('.gsd-search-clear').on('click', function(e) {
             e.preventDefault();
-
-            var $form = $(this).closest('.gsd-search-form');
-
-            // Clear all input fields
-            $form.find('input[name="gsd_search"]').val('');
-            $form.find('input[name="gsd_location"]').val('');
-            $form.find('select[name="gsd_type"]').val('');
-
-            // Clear search persistence from sessionStorage
-            sessionStorage.removeItem('gsd_last_search');
-            sessionStorage.removeItem('gsd_search_timestamp');
-
-            // Always redirect to clean URL without search params - don't use AJAX
-            // This ensures proper pagination and avoids loading too many results
-            window.location.href = $form.attr('action');
+            var $form = $('.gsd-search-form');
+            $form.find('input[type="text"]').val('');
+            $form.find('select').prop('selectedIndex', 0);
         });
 
         /**
-         * Helper function to get cookie value
+         * Layout switcher
          */
-        function getCookie(name) {
-            var value = "; " + document.cookie;
-            var parts = value.split("; " + name + "=");
-            if (parts.length === 2) return parts.pop().split(";").shift();
-            return null;
-        }
+        $('.gsd-layout-option').on('click', function(e) {
+            e.preventDefault();
+            var layout = $(this).data('layout');
+            $('.gsd-layout-option').removeClass('active');
+            $(this).addClass('active');
+            setCookie('gsd_layout', layout, 30);
+            $('#gsd-layout').val(layout);
+            $('.gsd-search-form').trigger('submit');
+        });
 
         /**
-         * Theme Login Trigger - Opens theme's login popup instead of WP login page
+         * Login trigger
          */
         $(document).on('click', '.gsd-theme-login-trigger', function(e) {
             e.preventDefault();
-
-            // Add 'open' class to theme's login popup
-            $('.jws-form-login-popup').addClass('open');
-
-            // Alternatively, if the theme uses a trigger button, click it
-            // Uncomment the line below if the above doesn't work
-            // $('.your-theme-login-button-class').trigger('click');
+            window.location.href = gsdPublic.login_url || '/wp-login.php';
         });
 
     });
