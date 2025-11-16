@@ -69,6 +69,22 @@ class GSD_Core {
     public function run() {
         new GSD_Post_Types();
         new GSD_Reviews();
+
+        // Check if version has changed and flush rewrite rules
+        $this->check_version_update();
+    }
+
+    /**
+     * Check if plugin version has changed and flush rewrite rules
+     */
+    private function check_version_update() {
+        $saved_version = get_option('gsd_version');
+
+        if ($saved_version !== $this->version) {
+            // Version has changed, flush rewrite rules
+            flush_rewrite_rules();
+            update_option('gsd_version', $this->version);
+        }
     }
 
     public function get_plugin_name() {

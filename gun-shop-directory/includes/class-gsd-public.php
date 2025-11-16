@@ -186,11 +186,15 @@ class GSD_Public {
         ob_start();
 
         // Get the correct form action URL
-        $form_action = '';
         if (is_post_type_archive('gsd_listing') || is_tax('gsd_category') || is_tax('gsd_location')) {
             $form_action = esc_url(remove_query_arg(array('gsd_search', 'gsd_location', 'gsd_type', 'gsd_category')));
         } else {
             $form_action = get_post_type_archive_link('gsd_listing');
+        }
+
+        // Fallback if archive link is empty
+        if (empty($form_action)) {
+            $form_action = home_url('/gun-shops/');
         }
         ?>
         <div class="gsd-search-wrapper">

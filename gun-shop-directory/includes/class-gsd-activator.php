@@ -83,6 +83,12 @@ class GSD_Activator {
             wp_trash_post($old_pages[0]->ID);
         }
 
+        // Register post types before flushing rewrite rules
+        require_once GSD_PLUGIN_DIR . 'includes/class-gsd-post-types.php';
+        $post_types = new GSD_Post_Types();
+        $post_types->register_post_types();
+        $post_types->register_taxonomies();
+
         // Flush rewrite rules
         flush_rewrite_rules();
     }
