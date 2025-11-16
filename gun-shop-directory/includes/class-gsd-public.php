@@ -966,11 +966,14 @@ class GSD_Public {
         $type = isset($_POST['gsd_type']) ? sanitize_text_field($_POST['gsd_type']) : '';
         $layout = isset($_POST['layout']) ? sanitize_text_field($_POST['layout']) : 'grid-large';
 
+        // Get posts per page setting (default to 12)
+        $posts_per_page = get_option('gsd_items_per_page', 12);
+
         // Build query args
         $args = array(
             'post_type' => 'gsd_listing',
             'post_status' => 'publish',
-            'posts_per_page' => -1,
+            'posts_per_page' => intval($posts_per_page),
             'orderby' => 'date',
             'order' => 'DESC',
         );
