@@ -195,6 +195,18 @@
         });
 
         /**
+         * Back to Listings button - Use browser history to preserve search
+         */
+        $(document).on('click', '.gsd-back-link', function(e) {
+            // Check if there's a previous page in history from the same domain
+            if (document.referrer && document.referrer.indexOf(window.location.host) !== -1) {
+                e.preventDefault();
+                window.history.back();
+            }
+            // Otherwise let the link work normally (fallback to archive page)
+        });
+
+        /**
          * Review Form Submission (both create and update)
          */
         $('#gsd-review-form').on('submit', function(e) {
