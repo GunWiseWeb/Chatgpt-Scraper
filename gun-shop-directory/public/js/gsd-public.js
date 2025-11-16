@@ -7,30 +7,7 @@
 
     $(document).ready(function() {
 
-        /**
-         * Restore search from URL parameters on page load
-         */
-        if ($('.gsd-search-form').length && $('.gsd-listings-grid, .gsd-listings-list').length) {
-            // Only auto-restore on the archive page (where listings are displayed)
-            var urlParams = new URLSearchParams(window.location.search);
-            var hasSearchParams = urlParams.has('gsd_location') || urlParams.has('gsd_search') || urlParams.has('gsd_type');
-
-            if (hasSearchParams) {
-                // Populate form fields from URL
-                if (urlParams.has('gsd_location')) {
-                    $('.gsd-search-form input[name="gsd_location"]').val(urlParams.get('gsd_location'));
-                }
-                if (urlParams.has('gsd_search')) {
-                    $('.gsd-search-form input[name="gsd_search"]').val(urlParams.get('gsd_search'));
-                }
-                if (urlParams.has('gsd_type')) {
-                    $('.gsd-search-form select[name="gsd_type"]').val(urlParams.get('gsd_type'));
-                }
-
-                // Auto-submit the form to show results
-                $('.gsd-search-form').trigger('submit');
-            }
-        }
+        // Note: URL restoration removed to prevent conflicts
 
         /**
          * AJAX Search Form Submission
@@ -93,24 +70,12 @@
                             }
                         }
 
-                        // Update URL with search parameters (for browser back button)
-                        var newUrl = new URL(window.location.href);
-                        if (formData.gsd_location) {
-                            newUrl.searchParams.set('gsd_location', formData.gsd_location);
-                        } else {
-                            newUrl.searchParams.delete('gsd_location');
-                        }
-                        if (formData.gsd_search) {
-                            newUrl.searchParams.set('gsd_search', formData.gsd_search);
-                        } else {
-                            newUrl.searchParams.delete('gsd_search');
-                        }
-                        if (formData.gsd_type) {
-                            newUrl.searchParams.set('gsd_type', formData.gsd_type);
-                        } else {
-                            newUrl.searchParams.delete('gsd_type');
-                        }
-                        window.history.pushState({}, '', newUrl);
+                        // Store search params in sessionStorage for back button
+                        sessionStorage.setItem('gsd_last_search', JSON.stringify({
+                            location: formData.gsd_location,
+                            search: formData.gsd_search,
+                            type: formData.gsd_type
+                        }));
 
                         // Scroll to results
                         $('html, body').animate({
@@ -196,16 +161,46 @@
         });
 
         /**
-         * Back to Listings button - Use browser history to preserve search
+         * Back to Listings button - Restore search from sessionStorage
          */
         $(document).on('click', '.gsd-back-link', function(e) {
-            // Check if there's a previous page in history from the same domain
-            if (document.referrer && document.referrer.indexOf(window.location.host) !== -1) {
+            var lastSearch = sessionStorage.getItem('gsd_last_search');
+            if (lastSearch) {
                 e.preventDefault();
-                window.history.back();
+                var searchData = JSON.parse(lastSearch);
+
+                // Navigate to archive and store flag to restore search
+                sessionStorage.setItem('gsd_restore_on_load', 'true');
+                window.location.href = $(this).attr('href');
             }
-            // Otherwise let the link work normally (fallback to archive page)
+            // Otherwise let the link work normally
         });
+
+        /**
+         * Restore search from sessionStorage when flagged
+         */
+        if (sessionStorage.getItem('gsd_restore_on_load') === 'true' && $('.gsd-search-form').length) {
+            sessionStorage.removeItem('gsd_restore_on_load');
+
+            var lastSearch = sessionStorage.getItem('gsd_last_search');
+            if (lastSearch) {
+                var searchData = JSON.parse(lastSearch);
+
+                // Populate form
+                if (searchData.location) {
+                    $('.gsd-search-form input[name="gsd_location"]').val(searchData.location);
+                }
+                if (searchData.search) {
+                    $('.gsd-search-form input[name="gsd_search"]').val(searchData.search);
+                }
+                if (searchData.type) {
+                    $('.gsd-search-form select[name="gsd_type"]').val(searchData.type);
+                }
+
+                // Auto-submit the search
+                $('.gsd-search-form').trigger('submit');
+            }
+        }
 
         /**
          * Review Form Submission (both create and update)

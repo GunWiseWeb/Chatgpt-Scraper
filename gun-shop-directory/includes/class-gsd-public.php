@@ -1106,33 +1106,6 @@ class GSD_Public {
     }
 
     /**
-     * Prevent 404 errors when search parameters are present
-     */
-    public function prevent_404_on_search() {
-        global $wp_query;
-
-        // Check if we have search parameters
-        $has_search_params = !empty($_GET['gsd_location']) || !empty($_GET['gsd_search']) || !empty($_GET['gsd_type']);
-
-        // If we have search parameters and WordPress thinks this is a 404
-        if ($has_search_params && is_404()) {
-            // Check if the URL is EXACTLY the archive (not a single listing)
-            $request_path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-            $request_path = rtrim($request_path, '/');
-
-            // Check if path ends with 'gun-shops' (but not 'gun-shops/something')
-            // This handles both root installs (/gun-shops) and subdirectory installs (/subdir/gun-shops)
-            if (preg_match('#/gun-shops$#', $request_path) || $request_path === '' || basename($request_path) === 'gun-shops') {
-                // This is our archive, not a 404
-                status_header(200);
-                $wp_query->is_404 = false;
-                $wp_query->is_archive = true;
-                $wp_query->is_post_type_archive = true;
-            }
-        }
-    }
-
-    /**
      * Modify main query to preserve search parameters in pagination
      */
     public function modify_main_query($query) {
