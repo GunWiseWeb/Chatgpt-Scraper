@@ -37,6 +37,15 @@ get_header();
         <?php echo do_shortcode('[gsd_search show_add_button="true"]'); ?>
     </div>
 
+    <!-- FFL Name Information Box -->
+    <div class="gsd-info-box gsd-ffl-name-notice">
+        <span class="dashicons dashicons-info"></span>
+        <div class="gsd-info-content">
+            <strong><?php _e('Important:', 'gun-shop-directory'); ?></strong>
+            <?php _e('These listings display the official FFL (Federal Firearms License) names, not the DBA (Doing Business As) names that businesses commonly use. If you cannot find your shop by its familiar business name, try searching by the license holder\'s name or location instead.', 'gun-shop-directory'); ?>
+        </div>
+    </div>
+
     <!-- Results Bar with Filters - Always visible -->
     <div class="gsd-results-bar">
         <span class="gsd-results-count">

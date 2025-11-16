@@ -334,6 +334,75 @@
         });
 
         /**
+         * Report Listing Modal
+         */
+        $(document).on('click', '.gsd-report-trigger', function(e) {
+            e.preventDefault();
+
+            var listingId = $(this).data('listing-id');
+
+            $('#gsd-report-listing-id').val(listingId);
+            $('#gsd-report-modal').fadeIn(300);
+            $('body').addClass('gsd-modal-open');
+        });
+
+        $(document).on('click', '.gsd-modal-close, .gsd-modal-overlay', function(e) {
+            e.preventDefault();
+            $('.gsd-modal').fadeOut(300);
+            $('body').removeClass('gsd-modal-open');
+        });
+
+        /**
+         * Report Form Submission
+         */
+        $('#gsd-report-form').on('submit', function(e) {
+            e.preventDefault();
+
+            var $form = $(this);
+            var $submitBtn = $form.find('button[type="submit"]');
+            var $message = $form.find('.gsd-form-message');
+            var originalBtnText = $submitBtn.text();
+
+            $submitBtn.prop('disabled', true).text('Submitting...');
+            $message.removeClass('success error').hide();
+
+            var formData = {
+                action: 'gsd_submit_report',
+                nonce: gsdPublic.nonce,
+                listing_id: $form.find('input[name="listing_id"]').val(),
+                reporter_email: $form.find('input[name="reporter_email"]').val(),
+                report_reason: $form.find('select[name="report_reason"]').val(),
+                report_details: $form.find('textarea[name="report_details"]').val()
+            };
+
+            $.ajax({
+                url: gsdPublic.ajax_url,
+                type: 'POST',
+                data: formData,
+                success: function(response) {
+                    if (response.success) {
+                        $message.addClass('success').text(response.data.message).show();
+                        $form[0].reset();
+
+                        // Close modal after 2 seconds
+                        setTimeout(function() {
+                            $('#gsd-report-modal').fadeOut(300);
+                            $('body').removeClass('gsd-modal-open');
+                        }, 2000);
+                    } else {
+                        $message.addClass('error').text(response.data.message).show();
+                    }
+                },
+                error: function() {
+                    $message.addClass('error').text('An error occurred. Please try again.').show();
+                },
+                complete: function() {
+                    $submitBtn.prop('disabled', false).text(originalBtnText);
+                }
+            });
+        });
+
+        /**
          * AJAX Search Form Submission
          */
         $('.gsd-search-form').on('submit', function(e) {
@@ -394,6 +463,28 @@
                     $submitBtn.prop('disabled', false).html(originalBtnText);
                 }
             });
+        });
+
+        /**
+         * Clear Search Form
+         */
+        $('.gsd-search-clear').on('click', function(e) {
+            e.preventDefault();
+
+            var $form = $(this).closest('.gsd-search-form');
+
+            // Clear all input fields
+            $form.find('input[name="gsd_search"]').val('');
+            $form.find('input[name="gsd_location"]').val('');
+            $form.find('select[name="gsd_type"]').val('');
+
+            // If we're on the directory page with AJAX, trigger the search with empty values
+            if ($('.gsd-listings-grid, .gsd-listings-list').length) {
+                $form.trigger('submit');
+            } else {
+                // Otherwise, redirect to the directory page with no search params
+                window.location.href = $form.attr('action');
+            }
         });
 
         /**

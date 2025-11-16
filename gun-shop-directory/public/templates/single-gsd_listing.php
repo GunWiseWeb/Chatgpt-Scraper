@@ -433,6 +433,16 @@ while (have_posts()) : the_post();
                     <div id="gsd-map" class="gsd-map" data-lat="<?php echo esc_attr($latitude); ?>" data-lng="<?php echo esc_attr($longitude); ?>"></div>
                 </div>
             <?php endif; ?>
+
+            <!-- Report Listing -->
+            <div class="gsd-sidebar-box gsd-report-box">
+                <h3><?php _e('Report Listing', 'gun-shop-directory'); ?></h3>
+                <p style="font-size: 0.9em; margin-bottom: 10px;"><?php _e('Found incorrect information or want your business removed?', 'gun-shop-directory'); ?></p>
+                <a href="#" class="gsd-button gsd-button-secondary gsd-report-trigger" data-listing-id="<?php echo $listing_id; ?>" style="width: 100%;">
+                    <span class="dashicons dashicons-flag"></span>
+                    <?php _e('Report This Listing', 'gun-shop-directory'); ?>
+                </a>
+            </div>
         </div>
     </div>
 </div>
@@ -481,6 +491,58 @@ while (have_posts()) : the_post();
                 <div class="gsd-modal-actions">
                     <button type="button" class="gsd-button gsd-modal-close"><?php _e('Cancel', 'gun-shop-directory'); ?></button>
                     <button type="submit" class="gsd-button gsd-button-primary"><?php _e('Submit Claim', 'gun-shop-directory'); ?></button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Report Listing Modal -->
+<div id="gsd-report-modal" class="gsd-modal" style="display:none;">
+    <div class="gsd-modal-overlay"></div>
+    <div class="gsd-modal-content">
+        <div class="gsd-modal-header">
+            <h2><?php _e('Report This Listing', 'gun-shop-directory'); ?></h2>
+            <button class="gsd-modal-close">&times;</button>
+        </div>
+        <div class="gsd-modal-body">
+            <p><?php _e('Please provide details about why you are reporting this listing. If you want your business removed, please include your contact information and verification of ownership.', 'gun-shop-directory'); ?></p>
+            <form id="gsd-report-form">
+                <input type="hidden" name="listing_id" id="gsd-report-listing-id" value="">
+
+                <div class="gsd-form-group">
+                    <label><?php _e('Your Email Address', 'gun-shop-directory'); ?> <span class="required">*</span></label>
+                    <input type="email" name="reporter_email" required class="gsd-input" placeholder="your.email@example.com">
+                    <p class="gsd-field-description"><?php _e('We will contact you at this email address regarding your report.', 'gun-shop-directory'); ?></p>
+                </div>
+
+                <div class="gsd-form-group">
+                    <label><?php _e('Reason for Report', 'gun-shop-directory'); ?> <span class="required">*</span></label>
+                    <select name="report_reason" required class="gsd-input">
+                        <option value=""><?php _e('Select a reason...', 'gun-shop-directory'); ?></option>
+                        <option value="incorrect_info"><?php _e('Incorrect Information', 'gun-shop-directory'); ?></option>
+                        <option value="closed"><?php _e('Business is Closed', 'gun-shop-directory'); ?></option>
+                        <option value="duplicate"><?php _e('Duplicate Listing', 'gun-shop-directory'); ?></option>
+                        <option value="remove_request"><?php _e('Business Owner - Request Removal', 'gun-shop-directory'); ?></option>
+                        <option value="inappropriate"><?php _e('Inappropriate Content', 'gun-shop-directory'); ?></option>
+                        <option value="other"><?php _e('Other', 'gun-shop-directory'); ?></option>
+                    </select>
+                </div>
+
+                <div class="gsd-form-group">
+                    <label><?php _e('Additional Details', 'gun-shop-directory'); ?> <span class="required">*</span></label>
+                    <p class="gsd-field-description">
+                        <span class="dashicons dashicons-info-outline"></span>
+                        <?php _e('Please provide specific details. If you are requesting removal as the business owner, please include verification information.', 'gun-shop-directory'); ?>
+                    </p>
+                    <textarea name="report_details" rows="5" placeholder="<?php _e('Provide details about your report...', 'gun-shop-directory'); ?>" required class="gsd-textarea"></textarea>
+                </div>
+
+                <div class="gsd-form-message"></div>
+
+                <div class="gsd-modal-actions">
+                    <button type="button" class="gsd-button gsd-modal-close"><?php _e('Cancel', 'gun-shop-directory'); ?></button>
+                    <button type="submit" class="gsd-button gsd-button-primary"><?php _e('Submit Report', 'gun-shop-directory'); ?></button>
                 </div>
             </form>
         </div>

@@ -221,6 +221,11 @@ class GSD_Public {
                             <?php _e('Search', 'gun-shop-directory'); ?>
                         </button>
 
+                        <button type="button" class="gsd-search-clear gsd-button gsd-button-secondary" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+                            <span class="dashicons dashicons-no-alt"></span>
+                            <?php _e('Clear', 'gun-shop-directory'); ?>
+                        </button>
+
                         <?php if ($atts['show_add_button'] === 'true' && get_option('gsd_allow_user_submissions', '1') == '1') : ?>
                             <button type="button" class="gsd-button gsd-button-secondary gsd-submit-trigger">
                                 <span class="dashicons dashicons-plus-alt"></span>
@@ -868,6 +873,87 @@ class GSD_Public {
 
         wp_send_json_success(array(
             'message' => __('Your claim has been submitted successfully! An administrator will review it shortly.', 'gun-shop-directory')
+        ));
+    }
+
+    /**
+     * Handle listing report submission via AJAX.
+     */
+    public function ajax_submit_report() {
+        check_ajax_referer('gsd_submit_review', 'nonce');
+
+        $listing_id = intval($_POST['listing_id']);
+        $reporter_email = sanitize_email($_POST['reporter_email']);
+        $report_reason = sanitize_text_field($_POST['report_reason']);
+        $report_details = sanitize_textarea_field($_POST['report_details']);
+
+        // Validate inputs
+        if (empty($reporter_email) || !is_email($reporter_email)) {
+            wp_send_json_error(array('message' => __('Please provide a valid email address.', 'gun-shop-directory')));
+        }
+
+        if (empty($report_reason)) {
+            wp_send_json_error(array('message' => __('Please select a reason for the report.', 'gun-shop-directory')));
+        }
+
+        if (empty($report_details)) {
+            wp_send_json_error(array('message' => __('Please provide details about your report.', 'gun-shop-directory')));
+        }
+
+        // Check if listing exists
+        if (!get_post($listing_id) || get_post_type($listing_id) !== 'gsd_listing') {
+            wp_send_json_error(array('message' => __('Invalid listing.', 'gun-shop-directory')));
+        }
+
+        // Store report data
+        $report_data = array(
+            'reporter_email' => $reporter_email,
+            'report_reason' => $report_reason,
+            'report_details' => $report_details,
+            'submitted_at' => current_time('mysql'),
+            'reporter_ip' => $_SERVER['REMOTE_ADDR'],
+        );
+
+        // Get existing reports for this listing
+        $existing_reports = get_post_meta($listing_id, '_gsd_reports', true);
+        if (!is_array($existing_reports)) {
+            $existing_reports = array();
+        }
+        $existing_reports[] = $report_data;
+        update_post_meta($listing_id, '_gsd_reports', $existing_reports);
+
+        // Send notification to admin
+        $admin_email = get_option('admin_email');
+        $listing_title = get_the_title($listing_id);
+        $listing_url = get_permalink($listing_id);
+        $edit_url = get_edit_post_link($listing_id);
+
+        $reason_labels = array(
+            'incorrect_info' => __('Incorrect Information', 'gun-shop-directory'),
+            'closed' => __('Business is Closed', 'gun-shop-directory'),
+            'duplicate' => __('Duplicate Listing', 'gun-shop-directory'),
+            'remove_request' => __('Business Owner - Request Removal', 'gun-shop-directory'),
+            'inappropriate' => __('Inappropriate Content', 'gun-shop-directory'),
+            'other' => __('Other', 'gun-shop-directory'),
+        );
+        $reason_label = isset($reason_labels[$report_reason]) ? $reason_labels[$report_reason] : $report_reason;
+
+        $subject = sprintf(__('[%s] Listing Report: %s', 'gun-shop-directory'), get_bloginfo('name'), $listing_title);
+        $message = sprintf(
+            __("A listing has been reported:\n\nListing: %s\nView listing: %s\nEdit listing: %s\n\nReporter Email: %s\nReason: %s\n\nDetails:\n%s\n\nSubmitted: %s", 'gun-shop-directory'),
+            $listing_title,
+            $listing_url,
+            $edit_url,
+            $reporter_email,
+            $reason_label,
+            $report_details,
+            current_time('mysql')
+        );
+
+        wp_mail($admin_email, $subject, $message, array('Reply-To: ' . $reporter_email));
+
+        wp_send_json_success(array(
+            'message' => __('Your report has been submitted successfully! We will review it and contact you if needed.', 'gun-shop-directory')
         ));
     }
 

@@ -260,6 +260,43 @@
 }
 
 /* ===========================
+   Info Box (FFL Notice)
+   =========================== */
+.gsd-info-box {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    padding: 18px 22px;
+    margin-bottom: 30px;
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    border: 2px solid #3b82f6;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.15);
+}
+
+.gsd-info-box .dashicons {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+    color: #1e40af;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.gsd-info-content {
+    flex: 1;
+    color: #1e3a8a;
+    font-size: 0.95em;
+    line-height: 1.6;
+}
+
+.gsd-info-content strong {
+    color: #1e40af;
+    font-weight: 700;
+    font-size: 1.05em;
+}
+
+/* ===========================
    Results Bar
    =========================== */
 .gsd-results-bar {
