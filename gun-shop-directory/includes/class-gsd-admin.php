@@ -450,6 +450,11 @@ class GSD_Admin {
         if (isset($_POST['gsd_fix_types_submit']) && check_admin_referer('gsd_fix_types', 'gsd_fix_types_nonce')) {
             $this->process_fix_business_types();
         }
+
+        // Handle delete all imported listings
+        if (isset($_POST['gsd_delete_all_submit']) && check_admin_referer('gsd_delete_all', 'gsd_delete_all_nonce')) {
+            $this->process_delete_all_imported();
+        }
         ?>
         <div class="wrap">
             <h1><?php _e('Import FFL Listings', 'gun-shop-directory'); ?></h1>
@@ -557,6 +562,34 @@ class GSD_Admin {
                     <p><strong><?php _e('Warning:', 'gun-shop-directory'); ?></strong> <?php _e('This will permanently delete Type 03 collector listings. Make sure you have a backup if needed.', 'gun-shop-directory'); ?></p>
                 </div>
             </div>
+
+            <div class="card" style="max-width: 800px; margin-top: 20px; border-left: 4px solid #dc3232;">
+                <h2 style="color: #dc3232;"><?php _e('Delete All Imported Listings', 'gun-shop-directory'); ?></h2>
+                <p><?php _e('Permanently delete ALL FFL listings to start fresh with a new import.', 'gun-shop-directory'); ?></p>
+
+                <h3><?php _e('What this will do:', 'gun-shop-directory'); ?></h3>
+                <ul>
+                    <li><strong><?php _e('Delete ALL imported FFL listings from your database', 'gun-shop-directory'); ?></strong></li>
+                    <li><?php _e('This includes all reviews, ratings, and associated data', 'gun-shop-directory'); ?></li>
+                    <li><?php _e('This action is PERMANENT and cannot be undone', 'gun-shop-directory'); ?></li>
+                    <li><?php _e('Only affects listings with FFL license numbers', 'gun-shop-directory'); ?></li>
+                    <li><?php _e('Manually created listings (without FFL numbers) will NOT be deleted', 'gun-shop-directory'); ?></li>
+                </ul>
+
+                <form method="post">
+                    <?php wp_nonce_field('gsd_delete_all', 'gsd_delete_all_nonce'); ?>
+
+                    <p class="submit">
+                        <button type="submit" name="gsd_delete_all_submit" class="button button-large" style="background: #dc3232; border-color: #dc3232; color: #fff;" onclick="return confirm('<?php esc_attr_e('WARNING: This will permanently delete ALL imported FFL listings!\n\nThis action CANNOT be undone!\n\nAre you absolutely sure you want to continue?', 'gun-shop-directory'); ?>');">
+                            <?php _e('Delete All Imported Listings', 'gun-shop-directory'); ?>
+                        </button>
+                    </p>
+                </form>
+
+                <div class="notice notice-error inline">
+                    <p><strong><?php _e('DANGER:', 'gun-shop-directory'); ?></strong> <?php _e('This will permanently delete all imported FFL listings. Make sure you have a database backup before proceeding!', 'gun-shop-directory'); ?></p>
+                </div>
+            </div>
         </div>
         <?php
     }
@@ -655,6 +688,40 @@ class GSD_Admin {
             add_settings_error(
                 'gsd_import',
                 'fix_failed',
+                isset($results['message']) ? $results['message'] : __('An error occurred.', 'gun-shop-directory'),
+                'error'
+            );
+        }
+
+        settings_errors('gsd_import');
+    }
+
+    /**
+     * Process delete all imported listings
+     */
+    private function process_delete_all_imported() {
+        $importer = new GSD_Importer();
+
+        // Increase time limit for large delete operations
+        set_time_limit(600); // 10 minutes for large deletions
+
+        $results = $importer->delete_all_imported_listings();
+
+        // Display results
+        if ($results['success']) {
+            $message = sprintf(
+                __('All imported listings deleted! Total deleted: %d', 'gun-shop-directory'),
+                $results['deleted']
+            );
+            add_settings_error('gsd_import', 'delete_success', $message, 'success');
+
+            if (isset($results['message'])) {
+                add_settings_error('gsd_import', 'delete_info', $results['message'], 'info');
+            }
+        } else {
+            add_settings_error(
+                'gsd_import',
+                'delete_failed',
                 isset($results['message']) ? $results['message'] : __('An error occurred.', 'gun-shop-directory'),
                 'error'
             );

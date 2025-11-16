@@ -322,6 +322,47 @@ class GSD_Importer {
     }
 
     /**
+     * Delete all imported FFL listings
+     *
+     * @return array Results of the delete operation
+     */
+    public function delete_all_imported_listings() {
+        $results = array(
+            'success' => true,
+            'deleted' => 0,
+        );
+
+        // Find all listings with FFL numbers
+        $args = array(
+            'post_type' => 'gsd_listing',
+            'post_status' => 'any',
+            'posts_per_page' => -1,
+            'fields' => 'ids',
+            'meta_query' => array(
+                array(
+                    'key' => '_gsd_ffl_number',
+                    'compare' => 'EXISTS',
+                ),
+            ),
+        );
+
+        $query = new WP_Query($args);
+
+        if (!$query->have_posts()) {
+            $results['message'] = __('No imported listings found.', 'gun-shop-directory');
+            return $results;
+        }
+
+        // Delete all posts
+        foreach ($query->posts as $post_id) {
+            wp_delete_post($post_id, true); // true = force delete permanently
+            $results['deleted']++;
+        }
+
+        return $results;
+    }
+
+    /**
      * Determine business type from FFL license type
      *
      * @param string $license_type ATF license type
