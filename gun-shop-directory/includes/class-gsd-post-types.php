@@ -5,12 +5,14 @@
 class GSD_Post_Types {
 
     public function __construct() {
-        add_action('init', array($this, 'register_post_types'));
-        add_action('init', array($this, 'register_taxonomies'));
+        add_action('init', array($this, 'register_post_types'), 0); // Priority 0 to register early
+        add_action('init', array($this, 'register_taxonomies'), 0);
+        add_action('init', array($this, 'add_rewrite_rules'));
         add_action('add_meta_boxes', array($this, 'add_meta_boxes'));
         add_action('save_post_gsd_listing', array($this, 'save_listing_meta'));
         add_filter('query_vars', array($this, 'add_query_vars'));
         add_action('pre_get_posts', array($this, 'modify_archive_query'));
+        add_action('admin_init', array($this, 'check_rewrite_rules'));
     }
 
     /**
@@ -30,6 +32,26 @@ class GSD_Post_Types {
         // Ensure we're getting published listings
         $query->set('post_type', 'gsd_listing');
         $query->set('post_status', 'publish');
+    }
+
+    /**
+     * Add custom rewrite rules for gun-shops archive
+     */
+    public function add_rewrite_rules() {
+        add_rewrite_rule('^gun-shops/?$', 'index.php?post_type=gsd_listing', 'top');
+        add_rewrite_rule('^gun-shops/page/([0-9]{1,})/?$', 'index.php?post_type=gsd_listing&paged=$matches[1]', 'top');
+    }
+
+    /**
+     * Check if rewrite rules are working, flush if not
+     */
+    public function check_rewrite_rules() {
+        $rules = get_option('rewrite_rules');
+
+        // Check if our custom rule exists
+        if (!isset($rules['^gun-shops/?$'])) {
+            flush_rewrite_rules();
+        }
     }
 
     public function register_post_types() {
