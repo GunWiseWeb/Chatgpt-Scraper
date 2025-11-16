@@ -1106,11 +1106,39 @@ class GSD_Public {
     }
 
     /**
+     * Prevent 404 errors when search parameters are present
+     */
+    public function prevent_404_on_search() {
+        global $wp_query;
+
+        // Check if we have search parameters
+        $has_search_params = !empty($_GET['gsd_location']) || !empty($_GET['gsd_search']) || !empty($_GET['gsd_type']);
+
+        // If we have search parameters and WordPress thinks this is a 404
+        if ($has_search_params && is_404()) {
+            // Check if the URL matches our archive
+            $request_uri = $_SERVER['REQUEST_URI'];
+            if (strpos($request_uri, '/gun-shops') !== false) {
+                // This is our archive, not a 404
+                status_header(200);
+                $wp_query->is_404 = false;
+                $wp_query->is_archive = true;
+                $wp_query->is_post_type_archive = true;
+            }
+        }
+    }
+
+    /**
      * Modify main query to preserve search parameters in pagination
      */
     public function modify_main_query($query) {
         // Only modify main query on frontend for gsd_listing archives
-        if (is_admin() || !$query->is_main_query() || !is_post_type_archive('gsd_listing')) {
+        if (is_admin() || !$query->is_main_query()) {
+            return;
+        }
+
+        // Check if this is a gsd_listing archive
+        if ($query->get('post_type') !== 'gsd_listing' && !is_post_type_archive('gsd_listing')) {
             return;
         }
 

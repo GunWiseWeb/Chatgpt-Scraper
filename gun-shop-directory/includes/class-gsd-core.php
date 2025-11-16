@@ -64,6 +64,9 @@ class GSD_Core {
 
         // Modify main query for search parameters and pagination
         add_action('pre_get_posts', array($public, 'modify_main_query'));
+
+        // Prevent 404 when search parameters are present
+        add_filter('template_redirect', array($public, 'prevent_404_on_search'));
     }
 
     public function run() {

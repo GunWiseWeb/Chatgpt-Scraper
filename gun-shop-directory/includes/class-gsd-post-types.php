@@ -24,14 +24,17 @@ class GSD_Post_Types {
             return;
         }
 
-        // Only for gsd_listing archive
-        if (!is_post_type_archive('gsd_listing')) {
-            return;
-        }
+        // Check if this is our archive by post_type query var
+        if ($query->get('post_type') === 'gsd_listing' || is_post_type_archive('gsd_listing')) {
+            // Ensure we're getting published listings
+            $query->set('post_type', 'gsd_listing');
+            $query->set('post_status', 'publish');
 
-        // Ensure we're getting published listings
-        $query->set('post_type', 'gsd_listing');
-        $query->set('post_status', 'publish');
+            // Make sure this is not treated as a 404
+            $query->is_home = false;
+            $query->is_archive = true;
+            $query->is_post_type_archive = true;
+        }
     }
 
     /**
