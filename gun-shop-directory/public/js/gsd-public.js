@@ -8,56 +8,9 @@
     $(document).ready(function() {
 
         /**
-         * Search Persistence - Restore search when returning from single listing
+         * Search Persistence - REMOVED
+         * Caused unwanted auto-redirects when visiting the main page
          */
-        // Check if we're on the directory/archive page
-        if ($('.gsd-search-form').length) {
-            // Save search parameters when form is submitted
-            $('.gsd-search-form').on('submit', function() {
-                var searchParams = {
-                    gsd_search: $(this).find('input[name="gsd_search"]').val(),
-                    gsd_location: $(this).find('input[name="gsd_location"]').val(),
-                    gsd_type: $(this).find('select[name="gsd_type"]').val()
-                };
-                sessionStorage.setItem('gsd_last_search', JSON.stringify(searchParams));
-                sessionStorage.setItem('gsd_search_timestamp', Date.now());
-            });
-
-            // Restore search on page load if coming back within 30 minutes
-            var lastSearch = sessionStorage.getItem('gsd_last_search');
-            var searchTimestamp = sessionStorage.getItem('gsd_search_timestamp');
-
-            if (lastSearch && searchTimestamp) {
-                var timeDiff = Date.now() - parseInt(searchTimestamp);
-                var thirtyMinutes = 30 * 60 * 1000;
-
-                // Only restore if within 30 minutes and no current search params in URL
-                if (timeDiff < thirtyMinutes && !window.location.search.includes('gsd_search') && !window.location.search.includes('gsd_location')) {
-                    try {
-                        var params = JSON.parse(lastSearch);
-                        // Check if any search values exist
-                        if (params.gsd_search || params.gsd_location || params.gsd_type) {
-                            $('.gsd-search-form input[name="gsd_search"]').val(params.gsd_search || '');
-                            $('.gsd-search-form input[name="gsd_location"]').val(params.gsd_location || '');
-                            $('.gsd-search-form select[name="gsd_type"]').val(params.gsd_type || '');
-
-                            // Auto-submit the form to restore results
-                            setTimeout(function() {
-                                $('.gsd-search-form').submit();
-                            }, 100);
-                        }
-                    } catch(e) {
-                        // Invalid JSON, clear storage
-                        sessionStorage.removeItem('gsd_last_search');
-                    }
-                }
-            }
-        }
-
-        // Clear search persistence when navigating to a single listing
-        if ($('.gsd-single-listing').length) {
-            // We're on a single listing page, do nothing (preserve storage)
-        }
 
         /**
          * Review Form Submission (both create and update)
