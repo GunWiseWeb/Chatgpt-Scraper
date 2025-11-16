@@ -1687,6 +1687,14 @@
     max-height: calc(100vh - 100px);
     overflow-y: auto;
     animation: modalSlideIn 0.3s ease;
+    z-index: 1000000;
+}
+
+.gsd-modal-content select,
+.gsd-modal-content input,
+.gsd-modal-content textarea {
+    position: relative;
+    z-index: 1000001;
 }
 
 @keyframes modalSlideIn {

@@ -67,6 +67,7 @@ class GSD_Admin {
     public function add_admin_menu() {
         // Get pending counts for notification bubbles
         $pending_reviews = $this->get_pending_reviews_count();
+        $reported_listings = $this->get_reported_listings_count();
 
         // Main settings page
         add_submenu_page(
@@ -93,6 +94,21 @@ class GSD_Admin {
             array($this, 'render_reviews_page')
         );
 
+        // Reported Listings page with notification bubble
+        $reports_menu_title = __('Reported Listings', 'gun-shop-directory');
+        if ($reported_listings > 0) {
+            $reports_menu_title .= ' <span class="awaiting-mod count-' . $reported_listings . '"><span class="pending-count" style="background-color: #dc3232;">' . number_format_i18n($reported_listings) . '</span></span>';
+        }
+
+        add_submenu_page(
+            'edit.php?post_type=gsd_listing',
+            __('Reported Listings', 'gun-shop-directory'),
+            $reports_menu_title,
+            'manage_options',
+            'gsd-reported-listings',
+            array($this, 'render_reported_listings_page')
+        );
+
         // FFL Import page
         add_submenu_page(
             'edit.php?post_type=gsd_listing',
@@ -111,6 +127,20 @@ class GSD_Admin {
         global $wpdb;
         $table_name = $wpdb->prefix . 'gsd_reviews';
         return (int) $wpdb->get_var("SELECT COUNT(*) FROM {$table_name} WHERE status = 'pending'");
+    }
+
+    /**
+     * Get count of reported listings.
+     */
+    private function get_reported_listings_count() {
+        global $wpdb;
+        $count = $wpdb->get_var(
+            "SELECT COUNT(DISTINCT post_id)
+            FROM {$wpdb->postmeta}
+            WHERE meta_key = '_gsd_reports'
+            AND post_id IN (SELECT ID FROM {$wpdb->posts} WHERE post_type = 'gsd_listing' AND post_status != 'trash')"
+        );
+        return (int) $count;
     }
 
     /**
@@ -728,5 +758,127 @@ class GSD_Admin {
         }
 
         settings_errors('gsd_import');
+    }
+
+    /**
+     * Render reported listings page.
+     */
+    public function render_reported_listings_page() {
+        // Handle dismiss action
+        if (isset($_POST['dismiss_report']) && check_admin_referer('gsd_dismiss_report')) {
+            $listing_id = intval($_POST['listing_id']);
+            $report_index = intval($_POST['report_index']);
+
+            $reports = get_post_meta($listing_id, '_gsd_reports', true);
+            if (is_array($reports) && isset($reports[$report_index])) {
+                unset($reports[$report_index]);
+                $reports = array_values($reports); // Re-index array
+
+                if (empty($reports)) {
+                    delete_post_meta($listing_id, '_gsd_reports');
+                } else {
+                    update_post_meta($listing_id, '_gsd_reports', $reports);
+                }
+
+                echo '<div class="notice notice-success"><p>' . __('Report dismissed successfully.', 'gun-shop-directory') . '</p></div>';
+            }
+        }
+
+        // Get all listings with reports
+        global $wpdb;
+        $reported_listing_ids = $wpdb->get_col(
+            "SELECT DISTINCT post_id
+            FROM {$wpdb->postmeta}
+            WHERE meta_key = '_gsd_reports'
+            AND post_id IN (SELECT ID FROM {$wpdb->posts} WHERE post_type = 'gsd_listing' AND post_status != 'trash')
+            ORDER BY post_id DESC"
+        );
+
+        ?>
+        <div class="wrap">
+            <h1><?php _e('Reported Listings', 'gun-shop-directory'); ?></h1>
+            <p><?php _e('Review and manage reports submitted by users. Click "Dismiss" to remove a report, or edit/delete the listing as needed.', 'gun-shop-directory'); ?></p>
+
+            <?php if (empty($reported_listing_ids)) : ?>
+                <div class="notice notice-info">
+                    <p><?php _e('No reported listings at this time.', 'gun-shop-directory'); ?></p>
+                </div>
+            <?php else : ?>
+                <div class="gsd-reported-listings">
+                    <?php foreach ($reported_listing_ids as $listing_id) :
+                        $reports = get_post_meta($listing_id, '_gsd_reports', true);
+                        if (!is_array($reports) || empty($reports)) {
+                            continue;
+                        }
+
+                        $listing = get_post($listing_id);
+                        $edit_link = get_edit_post_link($listing_id);
+                        $view_link = get_permalink($listing_id);
+                        $total_reports = count($reports);
+                        ?>
+                        <div class="gsd-report-item" style="background: white; padding: 20px; margin-bottom: 20px; border-left: 4px solid #dc3232; border-radius: 5px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px;">
+                                <div>
+                                    <h2 style="margin: 0 0 10px 0;">
+                                        <a href="<?php echo esc_url($edit_link); ?>" target="_blank"><?php echo esc_html($listing->post_title); ?></a>
+                                    </h2>
+                                    <p style="margin: 0; color: #666;">
+                                        <span class="dashicons dashicons-flag" style="color: #dc3232;"></span>
+                                        <strong><?php echo sprintf(_n('%d Report', '%d Reports', $total_reports, 'gun-shop-directory'), $total_reports); ?></strong>
+                                    </p>
+                                </div>
+                                <div style="display: flex; gap: 10px;">
+                                    <a href="<?php echo esc_url($view_link); ?>" class="button" target="_blank">
+                                        <span class="dashicons dashicons-visibility" style="margin-top: 3px;"></span> <?php _e('View', 'gun-shop-directory'); ?>
+                                    </a>
+                                    <a href="<?php echo esc_url($edit_link); ?>" class="button button-primary">
+                                        <span class="dashicons dashicons-edit" style="margin-top: 3px;"></span> <?php _e('Edit', 'gun-shop-directory'); ?>
+                                    </a>
+                                </div>
+                            </div>
+
+                            <?php foreach ($reports as $index => $report) :
+                                $reason_labels = array(
+                                    'incorrect_info' => __('Incorrect Information', 'gun-shop-directory'),
+                                    'closed' => __('Business is Closed', 'gun-shop-directory'),
+                                    'duplicate' => __('Duplicate Listing', 'gun-shop-directory'),
+                                    'remove_request' => __('Business Owner - Request Removal', 'gun-shop-directory'),
+                                    'inappropriate' => __('Inappropriate Content', 'gun-shop-directory'),
+                                    'other' => __('Other', 'gun-shop-directory'),
+                                );
+                                $reason_label = isset($reason_labels[$report['report_reason']]) ? $reason_labels[$report['report_reason']] : $report['report_reason'];
+                                ?>
+                                <div class="gsd-single-report" style="padding: 15px; background: #f9f9f9; margin-bottom: 10px; border-radius: 4px;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                                        <div>
+                                            <strong style="color: #dc3232;"><?php echo esc_html($reason_label); ?></strong>
+                                            <br>
+                                            <small style="color: #666;">
+                                                <?php echo esc_html($report['submitted_at']); ?> |
+                                                <a href="mailto:<?php echo esc_attr($report['reporter_email']); ?>"><?php echo esc_html($report['reporter_email']); ?></a>
+                                            </small>
+                                        </div>
+                                        <form method="post" style="margin: 0;">
+                                            <?php wp_nonce_field('gsd_dismiss_report'); ?>
+                                            <input type="hidden" name="listing_id" value="<?php echo esc_attr($listing_id); ?>">
+                                            <input type="hidden" name="report_index" value="<?php echo esc_attr($index); ?>">
+                                            <button type="submit" name="dismiss_report" class="button button-small"
+                                                    onclick="return confirm('<?php esc_attr_e('Are you sure you want to dismiss this report?', 'gun-shop-directory'); ?>');">
+                                                <span class="dashicons dashicons-dismiss" style="margin-top: 3px;"></span> <?php _e('Dismiss', 'gun-shop-directory'); ?>
+                                            </button>
+                                        </form>
+                                    </div>
+                                    <div style="padding: 10px; background: white; border-radius: 3px;">
+                                        <strong><?php _e('Details:', 'gun-shop-directory'); ?></strong>
+                                        <p style="margin: 8px 0 0 0; white-space: pre-wrap;"><?php echo esc_html($report['report_details']); ?></p>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+        </div>
+        <?php
     }
 }
