@@ -10,6 +10,14 @@
         // Note: URL restoration removed to prevent conflicts
 
         /**
+         * Ensure listing links work - stop any interference with link clicks
+         */
+        $(document).on('click', '.gsd-listing-card a:not([href^="#"]):not(.gsd-report-trigger):not(.gsd-claim-trigger)', function(e) {
+            // For actual listing navigation links, stop propagation to prevent form submission
+            e.stopPropagation();
+        });
+
+        /**
          * AJAX Search Form Submission
          */
         $('.gsd-search-form').on('submit', function(e) {
@@ -69,13 +77,6 @@
                                 $('.gsd-listings-grid, .gsd-listings-list').after(response.data.pagination);
                             }
                         }
-
-                        // Store search params in sessionStorage for back button
-                        sessionStorage.setItem('gsd_last_search', JSON.stringify({
-                            location: formData.gsd_location,
-                            search: formData.gsd_search,
-                            type: formData.gsd_type
-                        }));
 
                         // Scroll to results
                         $('html, body').animate({
@@ -160,47 +161,7 @@
             });
         });
 
-        /**
-         * Back to Listings button - Restore search from sessionStorage
-         */
-        $(document).on('click', '.gsd-back-link', function(e) {
-            var lastSearch = sessionStorage.getItem('gsd_last_search');
-            if (lastSearch) {
-                e.preventDefault();
-                var searchData = JSON.parse(lastSearch);
-
-                // Navigate to archive and store flag to restore search
-                sessionStorage.setItem('gsd_restore_on_load', 'true');
-                window.location.href = $(this).attr('href');
-            }
-            // Otherwise let the link work normally
-        });
-
-        /**
-         * Restore search from sessionStorage when flagged
-         */
-        if (sessionStorage.getItem('gsd_restore_on_load') === 'true' && $('.gsd-search-form').length) {
-            sessionStorage.removeItem('gsd_restore_on_load');
-
-            var lastSearch = sessionStorage.getItem('gsd_last_search');
-            if (lastSearch) {
-                var searchData = JSON.parse(lastSearch);
-
-                // Populate form
-                if (searchData.location) {
-                    $('.gsd-search-form input[name="gsd_location"]').val(searchData.location);
-                }
-                if (searchData.search) {
-                    $('.gsd-search-form input[name="gsd_search"]').val(searchData.search);
-                }
-                if (searchData.type) {
-                    $('.gsd-search-form select[name="gsd_type"]').val(searchData.type);
-                }
-
-                // Auto-submit the search
-                $('.gsd-search-form').trigger('submit');
-            }
-        }
+        // Search persistence removed - was causing navigation issues
 
         /**
          * Review Form Submission (both create and update)
