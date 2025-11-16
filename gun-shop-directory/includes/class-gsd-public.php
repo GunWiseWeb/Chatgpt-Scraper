@@ -185,14 +185,13 @@ class GSD_Public {
 
         ob_start();
 
-        // Always use the gun-shops archive URL to avoid 404 errors
-        // If we're already on the archive with query params, strip them
-        if (is_post_type_archive('gsd_listing') && !empty($_SERVER['REQUEST_URI'])) {
-            $current_url = home_url($_SERVER['REQUEST_URI']);
-            $form_action = esc_url(remove_query_arg(array('gsd_search', 'gsd_location', 'gsd_type', 'gsd_category'), $current_url));
+        // Get the correct form action URL
+        // Note: Form submission is handled by AJAX, so this is just for fallback
+        $form_action = '';
+        if (is_post_type_archive('gsd_listing') || is_tax('gsd_category') || is_tax('gsd_location')) {
+            $form_action = esc_url(remove_query_arg(array('gsd_search', 'gsd_location', 'gsd_type', 'gsd_category')));
         } else {
-            // Always use direct URL construction instead of get_post_type_archive_link
-            $form_action = home_url('/gun-shops/');
+            $form_action = get_post_type_archive_link('gsd_listing');
         }
         ?>
         <div class="gsd-search-wrapper">

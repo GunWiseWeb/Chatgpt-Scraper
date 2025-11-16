@@ -8,9 +8,67 @@
     $(document).ready(function() {
 
         /**
-         * Search Persistence - REMOVED
-         * Caused unwanted auto-redirects when visiting the main page
+         * AJAX Search Form Submission
          */
+        $('.gsd-search-form').on('submit', function(e) {
+            e.preventDefault();
+
+            var $form = $(this);
+            var $submitBtn = $form.find('button[type="submit"]');
+            var $resultsContainer = $('.gsd-listings-grid, .gsd-listings-list').first();
+            var $resultsCount = $('.gsd-results-count');
+            var originalBtnText = $submitBtn.html();
+
+            // Get current layout
+            var layout = $('#gsd-layout').val() || 'grid-large';
+            if (!layout) {
+                layout = getCookie('gsd_layout') || 'grid-large';
+            }
+
+            // Show loading state
+            $submitBtn.prop('disabled', true).html('<span class="dashicons dashicons-update gsd-spin"></span> Searching...');
+
+            var formData = {
+                action: 'gsd_search_listings',
+                gsd_location: $form.find('input[name="gsd_location"]').val(),
+                gsd_search: $form.find('input[name="gsd_search"]').val(),
+                gsd_type: $form.find('select[name="gsd_type"]').val(),
+                layout: layout
+            };
+
+            $.ajax({
+                url: gsdPublic.ajax_url,
+                type: 'POST',
+                data: formData,
+                success: function(response) {
+                    if (response.success) {
+                        // Replace just the listings container, not its parent
+                        $resultsContainer.replaceWith(response.data.html);
+
+                        // Update count
+                        if ($resultsCount.length && response.data.count !== undefined) {
+                            var countText = response.data.count === 1 ?
+                                response.data.count + ' listing found' :
+                                response.data.count + ' listings found';
+                            $resultsCount.text(countText);
+                        }
+
+                        // Scroll to results
+                        $('html, body').animate({
+                            scrollTop: $('.gsd-results-bar').offset().top - 100
+                        }, 300);
+                    } else {
+                        alert('Search failed. Please try again.');
+                    }
+                },
+                error: function() {
+                    alert('An error occurred. Please try again.');
+                },
+                complete: function() {
+                    $submitBtn.prop('disabled', false).html(originalBtnText);
+                }
+            });
+        });
 
         /**
          * Review Form Submission (both create and update)
