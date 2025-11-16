@@ -1116,9 +1116,12 @@ class GSD_Public {
 
         // If we have search parameters and WordPress thinks this is a 404
         if ($has_search_params && is_404()) {
-            // Check if the URL matches our archive
-            $request_uri = $_SERVER['REQUEST_URI'];
-            if (strpos($request_uri, '/gun-shops') !== false) {
+            // Check if the URL is EXACTLY the archive (not a single listing)
+            $request_path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+            $request_path = rtrim($request_path, '/');
+
+            // Only fix if this is the archive page, not a single listing
+            if ($request_path === '/gun-shops' || $request_path === '') {
                 // This is our archive, not a 404
                 status_header(200);
                 $wp_query->is_404 = false;
