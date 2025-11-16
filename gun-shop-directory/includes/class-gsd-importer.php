@@ -155,6 +155,11 @@ class GSD_Importer {
         // Determine business type from license type
         $business_type = $this->get_business_type_from_license($data['license_type']);
 
+        // Skip if business type is null (e.g., Type 03 collectors)
+        if ($business_type === null) {
+            return 'skipped';
+        }
+
         // Prepare post data
         $post_data = array(
             'post_title' => sanitize_text_field($data['business_name']),
@@ -248,22 +253,35 @@ class GSD_Importer {
      * Determine business type from FFL license type
      *
      * @param string $license_type ATF license type
-     * @return string Business type
+     * @return string|null Business type, or null to skip import
      */
     private function get_business_type_from_license($license_type) {
-        // Type 01: Dealer in firearms (brick & mortar typically)
-        // Type 02: Pawnbroker
-        // Type 03: Collector (exclude these, not businesses)
-        // Type 06: Ammunition manufacturer
-        // Type 07: Manufacturer of firearms
-        // Type 08: Importer of firearms
-        // Type 09: Dealer in destructive devices
-        // Type 10: Manufacturer of destructive devices
-        // Type 11: Importer of destructive devices
+        // Extract just the type number (e.g., "01" from "01 - Dealer")
+        $type_num = substr(trim($license_type), 0, 2);
 
-        // Most dealers are brick & mortar, but we'll default to 'both'
-        // since many FFLs now have online presence
-        return 'both';
+        switch ($type_num) {
+            case '01': // Dealer in firearms
+            case '02': // Pawnbroker
+            case '09': // Dealer in destructive devices
+                // Retail dealers - typically brick & mortar stores
+                return 'brick_mortar';
+
+            case '03': // Collector of curios & relics
+                // Not a business, skip import
+                return null;
+
+            case '06': // Ammunition manufacturer
+            case '07': // Manufacturer of firearms
+            case '08': // Importer of firearms
+            case '10': // Manufacturer of destructive devices
+            case '11': // Importer of destructive devices
+                // Manufacturers/importers - may have retail operations
+                return 'brick_mortar';
+
+            default:
+                // Unknown type, default to brick & mortar
+                return 'brick_mortar';
+        }
     }
 
     /**
