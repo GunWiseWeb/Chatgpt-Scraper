@@ -10,7 +10,8 @@
         /**
          * Restore search from URL parameters on page load
          */
-        if ($('.gsd-search-form').length) {
+        if ($('.gsd-search-form').length && $('.gsd-listings-grid, .gsd-listings-list').length) {
+            // Only auto-restore on the archive page (where listings are displayed)
             var urlParams = new URLSearchParams(window.location.search);
             var hasSearchParams = urlParams.has('gsd_location') || urlParams.has('gsd_search') || urlParams.has('gsd_type');
 
