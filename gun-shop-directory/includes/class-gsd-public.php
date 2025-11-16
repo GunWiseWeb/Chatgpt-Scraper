@@ -967,8 +967,10 @@ class GSD_Public {
         $type = isset($_POST['gsd_type']) ? sanitize_text_field($_POST['gsd_type']) : '';
         $layout = isset($_POST['layout']) ? sanitize_text_field($_POST['layout']) : 'grid-large';
 
-        // Get posts per page setting (default to 12)
-        $posts_per_page = get_option('gsd_items_per_page', 12);
+        // Show all filtered results in AJAX search (no pagination)
+        // When users search, they want to see all matching results
+        // The count tells them how many there are
+        $posts_per_page = -1;
 
         // Build query args
         $args = array(
@@ -1054,26 +1056,15 @@ class GSD_Public {
 
             $results_html = ob_get_clean();
 
-            // Generate pagination HTML
-            ob_start();
-            $total_pages = $query->max_num_pages;
-            if ($total_pages > 1) {
-                echo '<nav class="gsd-pagination">';
-                echo paginate_links(array(
-                    'total' => $total_pages,
-                    'current' => 1,
-                    'mid_size' => 2,
-                    'prev_text' => __('&laquo; Previous', 'gun-shop-directory'),
-                    'next_text' => __('Next &raquo;', 'gun-shop-directory'),
-                ));
-                echo '</nav>';
-            }
-            $pagination_html = ob_get_clean();
+            // Note: Pagination removed from AJAX results
+            // AJAX pagination is complex and pagination links would cause page reloads
+            // Users can narrow search to see fewer results
+            // Total count is still shown so users know how many results exist
 
             wp_send_json_success(array(
                 'html' => $results_html,
                 'count' => $query->found_posts,
-                'pagination' => $pagination_html
+                'pagination' => '' // No pagination in AJAX results
             ));
         } else {
             echo '<div class="gsd-no-results">';
