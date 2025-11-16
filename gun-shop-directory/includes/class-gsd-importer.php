@@ -263,16 +263,16 @@ class GSD_Importer {
             'errors' => 0,
         );
 
-        // Find all listings imported from ATF
+        // Find all listings imported from ATF (including older imports)
+        // Look for listings that have FFL license numbers
         $args = array(
             'post_type' => 'gsd_listing',
             'post_status' => 'any',
             'posts_per_page' => -1,
             'meta_query' => array(
                 array(
-                    'key' => '_gsd_imported_from_atf',
-                    'value' => '1',
-                    'compare' => '=',
+                    'key' => '_gsd_ffl_number',
+                    'compare' => 'EXISTS',
                 ),
             ),
         );
