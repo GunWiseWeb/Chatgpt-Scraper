@@ -250,6 +250,78 @@ class GSD_Importer {
     }
 
     /**
+     * Fix business types for already-imported FFL listings
+     *
+     * @return array Results of the fix operation
+     */
+    public function fix_imported_business_types() {
+        $results = array(
+            'success' => true,
+            'updated' => 0,
+            'deleted' => 0,
+            'skipped' => 0,
+            'errors' => 0,
+        );
+
+        // Find all listings imported from ATF
+        $args = array(
+            'post_type' => 'gsd_listing',
+            'post_status' => 'any',
+            'posts_per_page' => -1,
+            'meta_query' => array(
+                array(
+                    'key' => '_gsd_imported_from_atf',
+                    'value' => '1',
+                    'compare' => '=',
+                ),
+            ),
+        );
+
+        $query = new WP_Query($args);
+
+        if (!$query->have_posts()) {
+            $results['message'] = __('No imported listings found.', 'gun-shop-directory');
+            return $results;
+        }
+
+        while ($query->have_posts()) {
+            $query->the_post();
+            $post_id = get_the_ID();
+
+            // Get the license type
+            $license_type = get_post_meta($post_id, '_gsd_license_type', true);
+
+            if (empty($license_type)) {
+                $results['skipped']++;
+                continue;
+            }
+
+            // Determine correct business type
+            $new_business_type = $this->get_business_type_from_license($license_type);
+
+            // If type 03 collector, delete the listing
+            if ($new_business_type === null) {
+                wp_delete_post($post_id, true);
+                $results['deleted']++;
+            } else {
+                // Update the business type
+                $old_business_type = get_post_meta($post_id, '_gsd_business_type', true);
+
+                if ($old_business_type !== $new_business_type) {
+                    update_post_meta($post_id, '_gsd_business_type', $new_business_type);
+                    $results['updated']++;
+                } else {
+                    $results['skipped']++;
+                }
+            }
+        }
+
+        wp_reset_postdata();
+
+        return $results;
+    }
+
+    /**
      * Determine business type from FFL license type
      *
      * @param string $license_type ATF license type

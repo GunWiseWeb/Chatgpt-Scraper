@@ -445,6 +445,11 @@ class GSD_Admin {
         if (isset($_POST['gsd_import_submit']) && check_admin_referer('gsd_import_ffls', 'gsd_import_nonce')) {
             $this->process_import();
         }
+
+        // Handle fix business types
+        if (isset($_POST['gsd_fix_types_submit']) && check_admin_referer('gsd_fix_types', 'gsd_fix_types_nonce')) {
+            $this->process_fix_business_types();
+        }
         ?>
         <div class="wrap">
             <h1><?php _e('Import FFL Listings', 'gun-shop-directory'); ?></h1>
@@ -525,6 +530,33 @@ class GSD_Admin {
                     <p><strong><?php _e('Note:', 'gun-shop-directory'); ?></strong> <?php _e('Large imports may take several minutes. Do not close this page during import.', 'gun-shop-directory'); ?></p>
                 </div>
             </div>
+
+            <div class="card" style="max-width: 800px; margin-top: 20px;">
+                <h2><?php _e('Fix Already-Imported Listings', 'gun-shop-directory'); ?></h2>
+                <p><?php _e('If you imported FFLs before version 2.2.1, their business types may be incorrect (set to "both"). Use this tool to fix them.', 'gun-shop-directory'); ?></p>
+
+                <h3><?php _e('What this will do:', 'gun-shop-directory'); ?></h3>
+                <ul>
+                    <li><?php _e('Update all imported FFL listings to use correct business types based on license type', 'gun-shop-directory'); ?></li>
+                    <li><?php _e('Delete Type 03 collector listings (not retail businesses)', 'gun-shop-directory'); ?></li>
+                    <li><?php _e('Set dealers (Type 01, 02, 09) to "Brick & Mortar"', 'gun-shop-directory'); ?></li>
+                    <li><?php _e('Set manufacturers/importers (Type 06-08, 10-11) to "Brick & Mortar"', 'gun-shop-directory'); ?></li>
+                </ul>
+
+                <form method="post">
+                    <?php wp_nonce_field('gsd_fix_types', 'gsd_fix_types_nonce'); ?>
+
+                    <p class="submit">
+                        <button type="submit" name="gsd_fix_types_submit" class="button button-secondary button-large" onclick="return confirm('<?php esc_attr_e('This will update all imported FFL listings and delete Type 03 collectors. Continue?', 'gun-shop-directory'); ?>');">
+                            <?php _e('Fix Business Types', 'gun-shop-directory'); ?>
+                        </button>
+                    </p>
+                </form>
+
+                <div class="notice notice-warning inline">
+                    <p><strong><?php _e('Warning:', 'gun-shop-directory'); ?></strong> <?php _e('This will permanently delete Type 03 collector listings. Make sure you have a backup if needed.', 'gun-shop-directory'); ?></p>
+                </div>
+            </div>
         </div>
         <?php
     }
@@ -588,6 +620,42 @@ class GSD_Admin {
                 'gsd_import',
                 'import_failed',
                 $results['message'],
+                'error'
+            );
+        }
+
+        settings_errors('gsd_import');
+    }
+
+    /**
+     * Process fix business types for imported listings
+     */
+    private function process_fix_business_types() {
+        $importer = new GSD_Importer();
+
+        // Increase time limit for large operations
+        set_time_limit(300); // 5 minutes
+
+        $results = $importer->fix_imported_business_types();
+
+        // Display results
+        if ($results['success']) {
+            $message = sprintf(
+                __('Business types fixed! Updated: %d, Deleted: %d, Skipped: %d', 'gun-shop-directory'),
+                $results['updated'],
+                $results['deleted'],
+                $results['skipped']
+            );
+            add_settings_error('gsd_import', 'fix_success', $message, 'success');
+
+            if (isset($results['message'])) {
+                add_settings_error('gsd_import', 'fix_info', $results['message'], 'info');
+            }
+        } else {
+            add_settings_error(
+                'gsd_import',
+                'fix_failed',
+                isset($results['message']) ? $results['message'] : __('An error occurred.', 'gun-shop-directory'),
                 'error'
             );
         }
