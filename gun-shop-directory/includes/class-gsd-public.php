@@ -1053,9 +1053,27 @@ class GSD_Public {
             wp_reset_postdata();
 
             $results_html = ob_get_clean();
+
+            // Generate pagination HTML
+            ob_start();
+            $total_pages = $query->max_num_pages;
+            if ($total_pages > 1) {
+                echo '<nav class="gsd-pagination">';
+                echo paginate_links(array(
+                    'total' => $total_pages,
+                    'current' => 1,
+                    'mid_size' => 2,
+                    'prev_text' => __('&laquo; Previous', 'gun-shop-directory'),
+                    'next_text' => __('Next &raquo;', 'gun-shop-directory'),
+                ));
+                echo '</nav>';
+            }
+            $pagination_html = ob_get_clean();
+
             wp_send_json_success(array(
                 'html' => $results_html,
-                'count' => $query->found_posts
+                'count' => $query->found_posts,
+                'pagination' => $pagination_html
             ));
         } else {
             echo '<div class="gsd-no-results">';
@@ -1066,7 +1084,8 @@ class GSD_Public {
             $results_html = ob_get_clean();
             wp_send_json_success(array(
                 'html' => $results_html,
-                'count' => 0
+                'count' => 0,
+                'pagination' => '' // No pagination for no results
             ));
         }
     }

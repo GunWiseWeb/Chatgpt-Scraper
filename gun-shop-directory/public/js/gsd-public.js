@@ -53,6 +53,21 @@
                             $resultsCount.text(countText);
                         }
 
+                        // Update pagination
+                        if (response.data.pagination !== undefined) {
+                            var $existingPagination = $('.navigation.pagination, .gsd-pagination');
+                            if ($existingPagination.length) {
+                                if (response.data.pagination) {
+                                    $existingPagination.replaceWith(response.data.pagination);
+                                } else {
+                                    $existingPagination.remove();
+                                }
+                            } else if (response.data.pagination) {
+                                // Add pagination after listings if it doesn't exist
+                                $('.gsd-listings-grid, .gsd-listings-list').after(response.data.pagination);
+                            }
+                        }
+
                         // Scroll to results
                         $('html, body').animate({
                             scrollTop: $('.gsd-results-bar').offset().top - 100
