@@ -1673,13 +1673,14 @@
 }
 
 .gsd-modal-overlay {
-    position: absolute;
+    position: fixed;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
     background: rgba(0, 0, 0, 0.7);
-    z-index: 1;
+    z-index: 999999;
+    pointer-events: none;
 }
 
 .gsd-modal-content {
@@ -1692,13 +1693,14 @@
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
     max-height: calc(100vh - 100px);
     animation: modalSlideIn 0.3s ease;
-    z-index: 2;
+    z-index: 1000000;
     overflow: visible;
+    pointer-events: auto;
 }
 
 .gsd-modal-content select {
     position: relative;
-    z-index: 999999;
+    z-index: 1000001;
     background: white;
 }
 
