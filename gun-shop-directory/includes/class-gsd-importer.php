@@ -327,37 +327,64 @@ class GSD_Importer {
      * @return array Results of the delete operation
      */
     public function delete_all_imported_listings() {
+        global $wpdb;
+
         $results = array(
             'success' => true,
             'deleted' => 0,
         );
 
-        // Find all listings with FFL numbers
-        $args = array(
-            'post_type' => 'gsd_listing',
-            'post_status' => 'any',
-            'posts_per_page' => -1,
-            'fields' => 'ids',
-            'meta_query' => array(
-                array(
-                    'key' => '_gsd_ffl_number',
-                    'compare' => 'EXISTS',
-                ),
-            ),
+        // Use direct SQL to find all post IDs with FFL numbers (much faster)
+        $post_ids = $wpdb->get_col(
+            "SELECT DISTINCT p.ID
+            FROM {$wpdb->posts} p
+            INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
+            WHERE p.post_type = 'gsd_listing'
+            AND pm.meta_key = '_gsd_ffl_number'"
         );
 
-        $query = new WP_Query($args);
-
-        if (!$query->have_posts()) {
+        if (empty($post_ids)) {
             $results['message'] = __('No imported listings found.', 'gun-shop-directory');
             return $results;
         }
 
-        // Delete all posts
-        foreach ($query->posts as $post_id) {
-            wp_delete_post($post_id, true); // true = force delete permanently
-            $results['deleted']++;
+        // Process in batches to avoid timeout
+        $batch_size = 100;
+        $batches = array_chunk($post_ids, $batch_size);
+
+        foreach ($batches as $batch) {
+            $ids_string = implode(',', array_map('intval', $batch));
+
+            // Delete postmeta
+            $wpdb->query(
+                "DELETE FROM {$wpdb->postmeta} WHERE post_id IN ({$ids_string})"
+            );
+
+            // Delete posts
+            $wpdb->query(
+                "DELETE FROM {$wpdb->posts} WHERE ID IN ({$ids_string})"
+            );
+
+            // Delete relationships (term relationships)
+            $wpdb->query(
+                "DELETE FROM {$wpdb->term_relationships} WHERE object_id IN ({$ids_string})"
+            );
+
+            $results['deleted'] += count($batch);
+
+            // Prevent timeout
+            usleep(50000); // 50ms pause between batches
         }
+
+        // Clean up orphaned term counts
+        $wpdb->query(
+            "DELETE FROM {$wpdb->term_relationships}
+            WHERE term_taxonomy_id IN (
+                SELECT term_taxonomy_id FROM {$wpdb->term_taxonomy}
+                WHERE taxonomy IN ('gsd_category', 'gsd_location')
+            )
+            AND object_id NOT IN (SELECT ID FROM {$wpdb->posts})"
+        );
 
         return $results;
     }
