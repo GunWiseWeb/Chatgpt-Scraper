@@ -497,28 +497,28 @@ while (have_posts()) : the_post();
     </div>
 </div>
 
-<!-- Report Listing Modal -->
-<div id="gsd-report-modal" class="gsd-modal" style="display:none;">
-    <div class="gsd-modal-overlay"></div>
-    <div class="gsd-modal-content">
-        <div class="gsd-modal-header">
+<!-- Report Listing Modal - Completely Rewritten -->
+<div id="gsd-report-modal" class="gsd-report-modal" style="display:none;">
+    <div class="gsd-report-backdrop" onclick="document.getElementById('gsd-report-modal').style.display='none';document.body.classList.remove('gsd-modal-open');"></div>
+    <div class="gsd-report-dialog">
+        <div class="gsd-report-header">
             <h2><?php _e('Report This Listing', 'gun-shop-directory'); ?></h2>
-            <button class="gsd-modal-close">&times;</button>
+            <button type="button" class="gsd-report-close" onclick="document.getElementById('gsd-report-modal').style.display='none';document.body.classList.remove('gsd-modal-open');" aria-label="Close">&times;</button>
         </div>
-        <div class="gsd-modal-body">
+        <div class="gsd-report-content">
             <p><?php _e('Please provide details about why you are reporting this listing. If you want your business removed, please include your contact information and verification of ownership.', 'gun-shop-directory'); ?></p>
             <form id="gsd-report-form">
                 <input type="hidden" name="listing_id" id="gsd-report-listing-id" value="">
 
                 <div class="gsd-form-group">
-                    <label><?php _e('Your Email Address', 'gun-shop-directory'); ?> <span class="required">*</span></label>
-                    <input type="email" name="reporter_email" required class="gsd-input" placeholder="your.email@example.com">
+                    <label for="reporter-email"><?php _e('Your Email Address', 'gun-shop-directory'); ?> <span class="required">*</span></label>
+                    <input type="email" id="reporter-email" name="reporter_email" required class="gsd-input" placeholder="your.email@example.com">
                     <p class="gsd-field-description"><?php _e('We will contact you at this email address regarding your report.', 'gun-shop-directory'); ?></p>
                 </div>
 
                 <div class="gsd-form-group">
-                    <label><?php _e('Reason for Report', 'gun-shop-directory'); ?> <span class="required">*</span></label>
-                    <select name="report_reason" required class="gsd-input">
+                    <label for="report-reason"><?php _e('Reason for Report', 'gun-shop-directory'); ?> <span class="required">*</span></label>
+                    <select id="report-reason" name="report_reason" required class="gsd-input gsd-report-select">
                         <option value=""><?php _e('Select a reason...', 'gun-shop-directory'); ?></option>
                         <option value="incorrect_info"><?php _e('Incorrect Information', 'gun-shop-directory'); ?></option>
                         <option value="closed"><?php _e('Business is Closed', 'gun-shop-directory'); ?></option>
@@ -530,18 +530,18 @@ while (have_posts()) : the_post();
                 </div>
 
                 <div class="gsd-form-group">
-                    <label><?php _e('Additional Details', 'gun-shop-directory'); ?> <span class="required">*</span></label>
+                    <label for="report-details"><?php _e('Additional Details', 'gun-shop-directory'); ?> <span class="required">*</span></label>
                     <p class="gsd-field-description">
                         <span class="dashicons dashicons-info-outline"></span>
                         <?php _e('Please provide specific details. If you are requesting removal as the business owner, please include verification information.', 'gun-shop-directory'); ?>
                     </p>
-                    <textarea name="report_details" rows="5" placeholder="<?php _e('Provide details about your report...', 'gun-shop-directory'); ?>" required class="gsd-textarea"></textarea>
+                    <textarea id="report-details" name="report_details" rows="5" placeholder="<?php _e('Provide details about your report...', 'gun-shop-directory'); ?>" required class="gsd-textarea"></textarea>
                 </div>
 
                 <div class="gsd-form-message"></div>
 
-                <div class="gsd-modal-actions">
-                    <button type="button" class="gsd-button gsd-modal-close"><?php _e('Cancel', 'gun-shop-directory'); ?></button>
+                <div class="gsd-report-actions">
+                    <button type="button" class="gsd-button" onclick="document.getElementById('gsd-report-modal').style.display='none';document.body.classList.remove('gsd-modal-open');"><?php _e('Cancel', 'gun-shop-directory'); ?></button>
                     <button type="submit" class="gsd-button gsd-button-primary"><?php _e('Submit Report', 'gun-shop-directory'); ?></button>
                 </div>
             </form>

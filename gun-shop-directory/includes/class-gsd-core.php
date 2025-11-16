@@ -61,6 +61,9 @@ class GSD_Core {
         add_action('wp_ajax_nopriv_gsd_submit_report', array($public, 'ajax_submit_report'));
         add_action('wp_ajax_gsd_search_listings', array($public, 'ajax_search_listings'));
         add_action('wp_ajax_nopriv_gsd_search_listings', array($public, 'ajax_search_listings'));
+
+        // Modify main query for search parameters and pagination
+        add_action('pre_get_posts', array($public, 'modify_main_query'));
     }
 
     public function run() {

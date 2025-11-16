@@ -1704,6 +1704,97 @@
     background: white;
 }
 
+/* Report Modal - Completely Rewritten */
+.gsd-report-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 9999999;
+}
+
+.gsd-report-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.75);
+    cursor: pointer;
+}
+
+.gsd-report-dialog {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+    max-width: 600px;
+    width: 90%;
+    max-height: 90vh;
+    z-index: 10000000;
+}
+
+.gsd-report-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 25px 30px;
+    border-bottom: 2px solid var(--gsd-border);
+}
+
+.gsd-report-header h2 {
+    margin: 0;
+    color: var(--gsd-dark);
+    font-size: 1.5em;
+}
+
+.gsd-report-close {
+    background: none;
+    border: none;
+    font-size: 32px;
+    line-height: 1;
+    cursor: pointer;
+    color: #999;
+    transition: color 0.3s;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+}
+
+.gsd-report-close:hover {
+    color: var(--gsd-secondary);
+}
+
+.gsd-report-content {
+    padding: 30px;
+    max-height: calc(90vh - 140px);
+    overflow-y: auto;
+}
+
+.gsd-report-content > p {
+    margin-top: 0;
+    color: #666;
+    line-height: 1.6;
+}
+
+.gsd-report-select {
+    width: 100%;
+    appearance: auto;
+    -webkit-appearance: menulist;
+    -moz-appearance: menulist;
+}
+
+.gsd-report-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 25px;
+}
+
 @keyframes modalSlideIn {
     from {
         opacity: 0;

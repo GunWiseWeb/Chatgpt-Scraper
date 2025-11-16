@@ -386,18 +386,17 @@
         });
 
         /**
-         * Report Listing Modal
+         * Report Listing Modal - Updated for New Structure
          */
         $(document).on('click', '.gsd-report-trigger', function(e) {
             e.preventDefault();
-
             var listingId = $(this).data('listing-id');
-
             $('#gsd-report-listing-id').val(listingId);
-            $('#gsd-report-modal').fadeIn(300);
+            document.getElementById('gsd-report-modal').style.display = 'block';
             $('body').addClass('gsd-modal-open');
         });
 
+        // Close other modals (claim modal)
         $(document).on('click', '.gsd-modal-close, .gsd-modal-overlay', function(e) {
             e.preventDefault();
             $('.gsd-modal').fadeOut(300);
@@ -438,7 +437,7 @@
 
                         // Close modal after 2 seconds
                         setTimeout(function() {
-                            $('#gsd-report-modal').fadeOut(300);
+                            document.getElementById('gsd-report-modal').style.display = 'none';
                             $('body').removeClass('gsd-modal-open');
                         }, 2000);
                     } else {

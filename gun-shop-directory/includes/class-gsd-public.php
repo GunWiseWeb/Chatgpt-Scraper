@@ -1069,4 +1069,83 @@ class GSD_Public {
             ));
         }
     }
+
+    /**
+     * Modify main query to preserve search parameters in pagination
+     */
+    public function modify_main_query($query) {
+        // Only modify main query on frontend for gsd_listing archives
+        if (is_admin() || !$query->is_main_query() || !is_post_type_archive('gsd_listing')) {
+            return;
+        }
+
+        // Get search parameters from URL
+        $location = isset($_GET['gsd_location']) ? sanitize_text_field($_GET['gsd_location']) : '';
+        $search = isset($_GET['gsd_search']) ? sanitize_text_field($_GET['gsd_search']) : '';
+        $type = isset($_GET['gsd_type']) ? sanitize_text_field($_GET['gsd_type']) : '';
+
+        // Only modify if search parameters are present
+        if (empty($location) && empty($search) && empty($type)) {
+            return;
+        }
+
+        // Location search (city, state, or zip)
+        if (!empty($location)) {
+            $meta_query = array(
+                'relation' => 'OR',
+                array(
+                    'key' => '_gsd_city',
+                    'value' => $location,
+                    'compare' => 'LIKE',
+                ),
+                array(
+                    'key' => '_gsd_state',
+                    'value' => $location,
+                    'compare' => 'LIKE',
+                ),
+                array(
+                    'key' => '_gsd_zip',
+                    'value' => $location,
+                    'compare' => 'LIKE',
+                ),
+            );
+
+            // Add business type filter if present
+            if (!empty($type)) {
+                $meta_query['relation'] = 'AND';
+                $meta_query[] = array(
+                    'key' => '_gsd_business_type',
+                    'value' => $type,
+                    'compare' => '=',
+                );
+            }
+
+            $query->set('meta_query', $meta_query);
+        }
+        // Keyword search (title/content)
+        elseif (!empty($search)) {
+            $query->set('s', $search);
+
+            // Add business type filter if present
+            if (!empty($type)) {
+                $query->set('meta_query', array(
+                    array(
+                        'key' => '_gsd_business_type',
+                        'value' => $type,
+                        'compare' => '=',
+                    ),
+                ));
+            }
+        }
+        // Just business type filter
+        elseif (!empty($type)) {
+            $query->set('meta_query', array(
+                array(
+                    'key' => '_gsd_business_type',
+                    'value' => $type,
+                    'compare' => '=',
+                ),
+            ));
+        }
+    }
 }
