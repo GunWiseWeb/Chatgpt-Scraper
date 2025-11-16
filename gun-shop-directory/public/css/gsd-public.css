@@ -1666,6 +1666,10 @@
     right: 0;
     bottom: 0;
     z-index: 999999;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 50px;
 }
 
 .gsd-modal-overlay {
@@ -1675,26 +1679,27 @@
     right: 0;
     bottom: 0;
     background: rgba(0, 0, 0, 0.7);
+    z-index: 1;
 }
 
 .gsd-modal-content {
     position: relative;
     max-width: 600px;
-    margin: 50px auto;
+    width: 100%;
+    margin: 0 20px;
     background: white;
     border-radius: 15px;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
     max-height: calc(100vh - 100px);
     overflow-y: auto;
     animation: modalSlideIn 0.3s ease;
-    z-index: 1000000;
+    z-index: 2;
 }
 
-.gsd-modal-content select,
-.gsd-modal-content input,
-.gsd-modal-content textarea {
+.gsd-modal-content select {
     position: relative;
-    z-index: 1000001;
+    z-index: 3;
+    background: white;
 }
 
 @keyframes modalSlideIn {

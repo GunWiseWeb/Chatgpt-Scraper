@@ -530,13 +530,13 @@
             $form.find('input[name="gsd_location"]').val('');
             $form.find('select[name="gsd_type"]').val('');
 
-            // If we're on the directory page with AJAX, trigger the search with empty values
-            if ($('.gsd-listings-grid, .gsd-listings-list').length) {
-                $form.trigger('submit');
-            } else {
-                // Otherwise, redirect to the directory page with no search params
-                window.location.href = $form.attr('action');
-            }
+            // Clear search persistence from sessionStorage
+            sessionStorage.removeItem('gsd_last_search');
+            sessionStorage.removeItem('gsd_search_timestamp');
+
+            // Always redirect to clean URL without search params - don't use AJAX
+            // This ensures proper pagination and avoids loading too many results
+            window.location.href = $form.attr('action');
         });
 
         /**
