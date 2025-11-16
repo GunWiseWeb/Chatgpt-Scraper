@@ -423,7 +423,7 @@
                 nonce: gsdPublic.nonce,
                 listing_id: $form.find('input[name="listing_id"]').val(),
                 reporter_email: $form.find('input[name="reporter_email"]').val(),
-                report_reason: $form.find('select[name="report_reason"]').val(),
+                report_reason: $form.find('input[name="report_reason"]:checked').val(),
                 report_details: $form.find('textarea[name="report_details"]').val()
             };
 
