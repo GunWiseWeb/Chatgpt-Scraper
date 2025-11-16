@@ -86,6 +86,72 @@
         });
 
         /**
+         * AJAX Pagination - Handle page link clicks
+         */
+        $(document).on('click', '.gsd-page-link', function(e) {
+            e.preventDefault();
+
+            var $link = $(this);
+            var $pagination = $link.closest('.gsd-pagination');
+            var page = $link.data('page');
+
+            // Get search params from pagination data attributes
+            var formData = {
+                action: 'gsd_search_listings',
+                gsd_location: $pagination.data('location'),
+                gsd_search: $pagination.data('search'),
+                gsd_type: $pagination.data('type'),
+                layout: $pagination.data('layout'),
+                paged: page
+            };
+
+            var $resultsContainer = $('.gsd-listings-grid, .gsd-listings-list').first();
+            var $resultsCount = $('.gsd-results-count');
+
+            $.ajax({
+                url: gsdPublic.ajax_url,
+                type: 'POST',
+                data: formData,
+                success: function(response) {
+                    if (response.success) {
+                        // Replace listings
+                        $resultsContainer.replaceWith(response.data.html);
+
+                        // Update count
+                        if ($resultsCount.length && response.data.count !== undefined) {
+                            var countText = response.data.count === 1 ?
+                                response.data.count + ' listing found' :
+                                response.data.count + ' listings found';
+                            $resultsCount.text(countText);
+                        }
+
+                        // Update pagination
+                        if (response.data.pagination !== undefined) {
+                            var $existingPagination = $('.navigation.pagination, .gsd-pagination');
+                            if ($existingPagination.length) {
+                                if (response.data.pagination) {
+                                    $existingPagination.replaceWith(response.data.pagination);
+                                } else {
+                                    $existingPagination.remove();
+                                }
+                            } else if (response.data.pagination) {
+                                $('.gsd-listings-grid, .gsd-listings-list').after(response.data.pagination);
+                            }
+                        }
+
+                        // Scroll to results
+                        $('html, body').animate({
+                            scrollTop: $('.gsd-results-bar').offset().top - 100
+                        }, 300);
+                    }
+                },
+                error: function() {
+                    alert('An error occurred. Please try again.');
+                }
+            });
+        });
+
+        /**
          * Review Form Submission (both create and update)
          */
         $('#gsd-review-form').on('submit', function(e) {

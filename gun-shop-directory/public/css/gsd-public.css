@@ -2082,3 +2082,48 @@ body.gsd-modal-open {
     animation: gsd-spin 1s linear infinite;
     display: inline-block;
 }
+
+/* ===========================
+   AJAX Pagination
+   =========================== */
+.gsd-pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin: 30px 0;
+    flex-wrap: wrap;
+}
+
+.gsd-pagination a,
+.gsd-pagination .page-numbers {
+    display: inline-block;
+    min-width: 40px;
+    height: 40px;
+    line-height: 40px;
+    text-align: center;
+    padding: 0 12px;
+    border: 2px solid var(--gsd-border);
+    border-radius: 8px;
+    text-decoration: none;
+    color: var(--gsd-dark);
+    font-weight: 500;
+    transition: all 0.3s;
+}
+
+.gsd-pagination a:hover {
+    border-color: var(--gsd-primary);
+    background: var(--gsd-primary);
+    color: white;
+}
+
+.gsd-pagination .page-numbers.current {
+    border-color: var(--gsd-primary);
+    background: var(--gsd-primary);
+    color: white;
+}
+
+.gsd-pagination .prev,
+.gsd-pagination .next {
+    padding: 0 16px;
+}

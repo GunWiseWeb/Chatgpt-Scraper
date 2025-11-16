@@ -966,17 +966,17 @@ class GSD_Public {
         $search = isset($_POST['gsd_search']) ? sanitize_text_field($_POST['gsd_search']) : '';
         $type = isset($_POST['gsd_type']) ? sanitize_text_field($_POST['gsd_type']) : '';
         $layout = isset($_POST['layout']) ? sanitize_text_field($_POST['layout']) : 'grid-large';
+        $paged = isset($_POST['paged']) ? intval($_POST['paged']) : 1;
 
-        // Show all filtered results in AJAX search (no pagination)
-        // When users search, they want to see all matching results
-        // The count tells them how many there are
-        $posts_per_page = -1;
+        // Get posts per page setting (default to 12)
+        $posts_per_page = get_option('gsd_items_per_page', 12);
 
         // Build query args
         $args = array(
             'post_type' => 'gsd_listing',
             'post_status' => 'publish',
             'posts_per_page' => intval($posts_per_page),
+            'paged' => $paged,
             'orderby' => 'date',
             'order' => 'DESC',
         );
@@ -1056,15 +1056,39 @@ class GSD_Public {
 
             $results_html = ob_get_clean();
 
-            // Note: Pagination removed from AJAX results
-            // AJAX pagination is complex and pagination links would cause page reloads
-            // Users can narrow search to see fewer results
-            // Total count is still shown so users know how many results exist
+            // Generate AJAX-friendly pagination
+            ob_start();
+            $total_pages = $query->max_num_pages;
+            if ($total_pages > 1) {
+                echo '<nav class="gsd-pagination" data-location="' . esc_attr($location) . '" data-search="' . esc_attr($search) . '" data-type="' . esc_attr($type) . '" data-layout="' . esc_attr($layout) . '">';
+
+                // Previous link
+                if ($paged > 1) {
+                    echo '<a href="#" class="gsd-page-link prev" data-page="' . ($paged - 1) . '">&laquo; Previous</a>';
+                }
+
+                // Page numbers
+                for ($i = 1; $i <= $total_pages; $i++) {
+                    if ($i == $paged) {
+                        echo '<span class="page-numbers current">' . $i . '</span>';
+                    } else {
+                        echo '<a href="#" class="gsd-page-link" data-page="' . $i . '">' . $i . '</a>';
+                    }
+                }
+
+                // Next link
+                if ($paged < $total_pages) {
+                    echo '<a href="#" class="gsd-page-link next" data-page="' . ($paged + 1) . '">Next &raquo;</a>';
+                }
+
+                echo '</nav>';
+            }
+            $pagination_html = ob_get_clean();
 
             wp_send_json_success(array(
                 'html' => $results_html,
                 'count' => $query->found_posts,
-                'pagination' => '' // No pagination in AJAX results
+                'pagination' => $pagination_html
             ));
         } else {
             echo '<div class="gsd-no-results">';
