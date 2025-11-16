@@ -517,16 +517,33 @@ while (have_posts()) : the_post();
                 </div>
 
                 <div class="gsd-form-group">
-                    <label for="report-reason"><?php _e('Reason for Report', 'gun-shop-directory'); ?> <span class="required">*</span></label>
-                    <select id="report-reason" name="report_reason" required class="gsd-input gsd-report-select">
-                        <option value=""><?php _e('Select a reason...', 'gun-shop-directory'); ?></option>
-                        <option value="incorrect_info"><?php _e('Incorrect Information', 'gun-shop-directory'); ?></option>
-                        <option value="closed"><?php _e('Business is Closed', 'gun-shop-directory'); ?></option>
-                        <option value="duplicate"><?php _e('Duplicate Listing', 'gun-shop-directory'); ?></option>
-                        <option value="remove_request"><?php _e('Business Owner - Request Removal', 'gun-shop-directory'); ?></option>
-                        <option value="inappropriate"><?php _e('Inappropriate Content', 'gun-shop-directory'); ?></option>
-                        <option value="other"><?php _e('Other', 'gun-shop-directory'); ?></option>
-                    </select>
+                    <label><?php _e('Reason for Report', 'gun-shop-directory'); ?> <span class="required">*</span></label>
+                    <div class="gsd-radio-group">
+                        <label class="gsd-radio-label">
+                            <input type="radio" name="report_reason" value="incorrect_info" required>
+                            <span><?php _e('Incorrect Information', 'gun-shop-directory'); ?></span>
+                        </label>
+                        <label class="gsd-radio-label">
+                            <input type="radio" name="report_reason" value="closed" required>
+                            <span><?php _e('Business is Closed', 'gun-shop-directory'); ?></span>
+                        </label>
+                        <label class="gsd-radio-label">
+                            <input type="radio" name="report_reason" value="duplicate" required>
+                            <span><?php _e('Duplicate Listing', 'gun-shop-directory'); ?></span>
+                        </label>
+                        <label class="gsd-radio-label">
+                            <input type="radio" name="report_reason" value="remove_request" required>
+                            <span><?php _e('Business Owner - Request Removal', 'gun-shop-directory'); ?></span>
+                        </label>
+                        <label class="gsd-radio-label">
+                            <input type="radio" name="report_reason" value="inappropriate" required>
+                            <span><?php _e('Inappropriate Content', 'gun-shop-directory'); ?></span>
+                        </label>
+                        <label class="gsd-radio-label">
+                            <input type="radio" name="report_reason" value="other" required>
+                            <span><?php _e('Other', 'gun-shop-directory'); ?></span>
+                        </label>
+                    </div>
                 </div>
 
                 <div class="gsd-form-group">
